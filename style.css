@@ -1,0 +1,731 @@
+:root {
+    --primary: #4f46e5;
+    --primary-hover: #4338ca;
+    --accent: #15803d;
+    --accent-hover: #166534;
+    --bg: #f9fafb;
+    --card-bg: #ffffff;
+    --text: #1f2937;
+    --gray: #6b7280;
+    --border: #e5e7eb;
+    --danger: #dc2626;
+    --success: #16a34a;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+    margin: 0;
+    min-height: 100vh;
+    transition: background-color 0.3s;
+}
+
+/* Couleurs selon le mode de paiement : fond de page + boutons d'action */
+body[data-mode="cash"] {
+    --bg: #d9f2df;          /* vert doux : espèces */
+    --accent: #15803d;
+    --accent-hover: #166534;
+}
+
+body[data-mode="virement"] {
+    --bg: #d6e6fb;          /* bleu doux : virement bancaire */
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+}
+
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* ---------- En-tête ---------- */
+
+.app-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background-color: var(--primary);
+    color: white;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.app-header h1 {
+    flex: 1;
+    margin: 0;
+    font-size: 18px;
+    text-align: center;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Bouton hamburger */
+.menu-btn {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    background: transparent;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+.menu-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.menu-btn span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: white;
+    border-radius: 2px;
+}
+
+/* Bouton Cash / Virement */
+.mode-toggle {
+    display: flex;
+    padding: 3px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 999px;
+    flex-shrink: 0;
+}
+
+.mode-btn {
+    width: auto;
+    padding: 6px 12px;
+    background: transparent;
+    color: white;
+    font-size: 13px;
+    border-radius: 999px;
+}
+
+.mode-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.mode-btn[aria-pressed="true"],
+.mode-btn[aria-pressed="true"]:hover {
+    background: white;
+    color: var(--primary);
+}
+
+/* ---------- Menu coulissant ---------- */
+
+.overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    background: rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s, visibility 0.25s;
+}
+
+.overlay.open {
+    opacity: 1;
+    visibility: visible;
+}
+
+.drawer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 40;
+    width: 270px;
+    max-width: 80vw;
+    padding: 16px 0;
+    background: var(--card-bg);
+    box-shadow: 4px 0 16px rgba(0, 0, 0, 0.2);
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition: transform 0.25s ease, visibility 0.25s;
+}
+
+.drawer.open {
+    transform: translateX(0);
+    visibility: visible;
+}
+
+.drawer-title {
+    padding: 8px 20px 16px;
+    font-size: 20px;
+    font-weight: bold;
+    color: var(--primary);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 8px;
+}
+
+.drawer a {
+    display: block;
+    padding: 14px 20px;
+    color: var(--text);
+    text-decoration: none;
+    font-weight: 600;
+    border-left: 4px solid transparent;
+}
+
+.drawer a:hover {
+    background: #f3f4f6;
+}
+
+.drawer a.active {
+    color: var(--primary);
+    background: #eef2ff;
+    border-left-color: var(--primary);
+}
+
+/* ---------- Contenu ---------- */
+
+.card {
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.card h3 {
+    margin-top: 0;
+}
+
+.page-title {
+    margin: 0 0 6px;
+    font-size: 22px;
+}
+
+.hint {
+    margin: 0 0 15px;
+    font-size: 13px;
+    color: var(--gray);
+}
+
+.mode-badge {
+    margin: 0 0 15px;
+    font-size: 14px;
+    color: var(--gray);
+}
+
+.mode-badge strong {
+    color: var(--accent);
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.optional {
+    font-weight: normal;
+    color: var(--gray);
+}
+
+.field-hint {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--gray);
+}
+
+input, select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-sizing: border-box;
+    font-size: 16px;
+    background-color: white;
+}
+
+/* Boutons d'action : la couleur suit le mode (vert = cash, bleu = virement) */
+button {
+    width: 100%;
+    background-color: var(--accent);
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: var(--accent-hover);
+}
+
+.secondary-btn {
+    margin-top: 10px;
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+}
+
+.secondary-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.feedback {
+    min-height: 20px;
+    margin: 10px 0 0;
+    font-size: 14px;
+    text-align: center;
+    color: var(--success);
+}
+
+.feedback.error {
+    color: var(--danger);
+}
+
+.total-display {
+    font-size: 20px;
+    font-weight: bold;
+    text-align: right;
+    margin-top: 10px;
+    color: var(--primary);
+}
+
+/* ---------- Champ de date + bouton calendrier ---------- */
+
+.date-field {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+}
+
+.date-field input {
+    flex: 1;
+    min-width: 0;
+}
+
+.calendar-btn {
+    width: 48px;
+    flex-shrink: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    color: var(--accent);
+    border: 1px solid var(--border);
+}
+
+.calendar-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.calendar-btn svg {
+    width: 22px;
+    height: 22px;
+}
+
+/* ---------- Calendrier ---------- */
+
+.calendar-modal {
+    z-index: 60;
+    align-items: center;
+}
+
+.calendar {
+    width: 100%;
+    max-width: 340px;
+    margin: auto;
+    padding: 16px;
+    background: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.cal-header {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 10px;
+}
+
+.cal-nav {
+    width: 36px;
+    flex-shrink: 0;
+    padding: 6px 0;
+    font-size: 18px;
+    line-height: 1;
+}
+
+.cal-title {
+    flex: 1;
+    text-align: center;
+    font-weight: bold;
+    font-size: 15px;
+}
+
+.cal-weekdays,
+.cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+}
+
+.cal-weekdays span {
+    padding: 4px 0;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gray);
+}
+
+.cal-day {
+    width: auto;
+    padding: 0;
+    aspect-ratio: 1;
+    background: transparent;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: normal;
+    border-radius: 8px;
+    transition: none;
+}
+
+.cal-day:hover {
+    background: #e5e7eb;
+}
+
+.cal-day.today {
+    border: 1px solid var(--accent);
+}
+
+.cal-day.selected,
+.cal-day.selected:hover {
+    background: var(--accent);
+    color: white;
+    font-weight: bold;
+}
+
+.cal-footer {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.cal-footer .secondary-btn {
+    margin-top: 0;
+}
+
+/* ---------- Graphique en cercle ---------- */
+
+.title-link {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+.title-link:hover {
+    text-decoration: underline;
+}
+
+.chart-container svg {
+    display: block;
+    width: 100%;
+    max-width: 320px;
+    margin: 0 auto;
+}
+
+.slice {
+    cursor: pointer;
+    outline: none;
+}
+
+.slice path,
+.slice circle {
+    stroke: #ffffff;
+    stroke-width: 1.5;
+    transition: opacity 0.15s;
+}
+
+.slice:hover path,
+.slice:hover circle {
+    opacity: 0.85;
+}
+
+.slice:focus path,
+.slice:focus circle {
+    stroke: var(--text);
+    stroke-width: 3;
+}
+
+.slice text {
+    fill: #ffffff;
+    font-size: 11px;
+    font-weight: bold;
+    text-anchor: middle;
+    dominant-baseline: middle;
+    pointer-events: none;
+    paint-order: stroke;
+    stroke: rgba(0, 0, 0, 0.35);
+    stroke-width: 2.5px;
+}
+
+.legend {
+    list-style: none;
+    margin: 16px 0 0;
+    padding: 0;
+}
+
+.legend a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 8px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    text-decoration: none;
+    font-size: 14px;
+    border-radius: 6px;
+}
+
+.legend a:hover {
+    background: #f3f4f6;
+}
+
+.swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.legend-name {
+    flex: 1;
+    font-weight: 600;
+}
+
+.legend-value {
+    color: var(--gray);
+    white-space: nowrap;
+}
+
+.back-link {
+    display: inline-block;
+    margin-bottom: 14px;
+    color: var(--primary);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.back-link:hover {
+    text-decoration: underline;
+}
+
+/* ---------- Comptes côte à côte ---------- */
+
+.account-tiles {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.account-tile {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    padding: 16px 14px;
+    background: var(--card-bg);
+    color: var(--text);
+    text-decoration: none;
+    border-radius: 12px;
+    border-top: 5px solid var(--tile-color);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.account-tile:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 12px -2px rgba(0, 0, 0, 0.15);
+}
+
+.account-tile.bank {
+    --tile-color: #2563eb;
+}
+
+.account-tile.cash {
+    --tile-color: #15803d;
+}
+
+.tile-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gray);
+}
+
+.tile-balance {
+    font-size: 22px;
+    font-weight: bold;
+    overflow-wrap: anywhere;
+}
+
+.tile-balance.negative {
+    color: var(--danger);
+}
+
+.tile-sub {
+    font-size: 12px;
+    color: var(--gray);
+}
+
+.tile-more {
+    margin-top: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--tile-color);
+}
+
+.total-line {
+    margin: 0 0 20px;
+    text-align: center;
+    font-size: 16px;
+}
+
+/* ---------- Tableaux ---------- */
+
+.table-wrap {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+}
+
+th {
+    background-color: #f3f4f6;
+    font-weight: 600;
+}
+
+/* Lignes cliquables (modification d'une dépense) */
+tr.clickable {
+    cursor: pointer;
+}
+
+tr.clickable:hover {
+    background: #f9fafb;
+}
+
+tr.clickable:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+}
+
+/* Lignes antérieures à la date du solde de référence (non comptées) */
+tr.ignored td {
+    opacity: 0.45;
+    font-style: italic;
+}
+
+.summary-table td,
+.summary-table th {
+    text-align: right;
+}
+
+.badge {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent);
+    background: rgba(0, 0, 0, 0.06);
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.positive {
+    color: var(--success);
+    font-weight: bold;
+}
+
+.negative {
+    color: var(--danger);
+    font-weight: bold;
+}
+
+.delete-btn {
+    background: none;
+    border: none;
+    color: #ef4444;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 20px;
+    padding: 0 4px;
+    width: auto;
+}
+
+.delete-btn:hover {
+    color: var(--danger);
+    background: none;
+}
+
+.empty-message {
+    text-align: center;
+    color: var(--gray);
+    font-style: italic;
+    padding: 20px;
+}
+
+/* ---------- Fenêtre de modification ---------- */
+
+.modal {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 20px 16px;
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.45);
+}
+
+.modal-card {
+    width: 100%;
+    max-width: 420px;
+    margin: auto;
+    padding: 20px;
+    background: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.modal-card h3 {
+    margin-top: 0;
+}

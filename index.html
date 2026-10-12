@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Budget Simple</title>
+    <!-- Lien vers le fichier de style externe -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body data-mode="cash">
+
+    <!-- En-tête : menu à gauche, titre au centre, mode de paiement à droite -->
+    <header class="app-header">
+        <button type="button" id="menu-btn" class="menu-btn" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="drawer">
+            <span></span><span></span><span></span>
+        </button>
+
+        <h1>Mon Budget</h1>
+
+        <div class="mode-toggle" role="group" aria-label="Mode de paiement">
+            <button type="button" class="mode-btn" data-mode="cash" aria-pressed="true">Cash</button>
+            <button type="button" class="mode-btn" data-mode="virement" aria-pressed="false">Virement</button>
+        </div>
+    </header>
+
+    <!-- Menu coulissant -->
+    <div id="overlay" class="overlay"></div>
+    <nav id="drawer" class="drawer" aria-label="Menu principal">
+        <div class="drawer-title">Menu</div>
+        <a href="#ajouter" data-page="ajouter">Ajouter une dépense</a>
+        <a href="#depenses" data-page="depenses">Récapitulatif des dépenses</a>
+        <a href="#revenus" data-page="revenus">Revenus et soldes</a>
+    </nav>
+
+    <main class="container">
+
+        <!-- PAGE 1 : Ajouter une dépense -->
+        <section id="page-ajouter" class="page">
+            <div class="card">
+                <h3>Ajouter une dépense</h3>
+                <p class="mode-badge">Paiement : <strong id="mode-label">Cash</strong></p>
+                <form id="expense-form">
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <input type="text" id="description" placeholder="Ex: Achat de bananes" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="amount">Montant</label>
+                        <input type="text" id="amount" class="digits-only" inputmode="numeric" pattern="[0-9]*" maxlength="12" autocomplete="off" placeholder="Ex: 1500" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="expense-date">Date <span class="optional">(facultatif)</span></label>
+                        <div class="date-field">
+                            <input type="text" id="expense-date" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="JJ/MM/AAAA">
+                            <button type="button" class="calendar-btn" aria-label="Ouvrir le calendrier">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                            </button>
+                        </div>
+                        <small class="field-hint">Laisse vide pour utiliser la date du jour.</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="category">Catégorie</label>
+                        <select id="category" required>
+                            <option value="Alimentation">Alimentation</option>
+                            <option value="Transport">Transport</option>
+                            <option value="Loisirs">Loisirs</option>
+                            <option value="Factures">Factures</option>
+                            <option value="Autre">Autre</option>
+                        </select>
+                    </div>
+                    <button type="submit">Enregistrer</button>
+                    <p id="expense-feedback" class="feedback" role="status"></p>
+                </form>
+            </div>
+        </section>
+
+        <!-- PAGE 2 : Graphique des dépenses par catégorie -->
+        <section id="page-depenses" class="page" hidden>
+            <div class="card">
+                <h3>
+                    <a href="#tableau" class="title-link">Dépenses par catégorie <span aria-hidden="true">›</span></a>
+                </h3>
+                <p class="hint">Clique sur le titre pour voir le tableau complet, ou sur une part du cercle pour voir uniquement cette catégorie.</p>
+
+                <div id="chart-container" class="chart-container"></div>
+                <div id="chart-empty" class="empty-message">Aucune dépense enregistrée pour le moment.</div>
+                <ul id="chart-legend" class="legend"></ul>
+
+                <div class="total-display">
+                    Total : <span id="chart-total">0</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- PAGE 2 bis : Tableau des dépenses (filtrable par catégorie) -->
+        <section id="page-tableau" class="page" hidden>
+            <a href="#depenses" class="back-link">‹ Retour au graphique</a>
+
+            <div class="card">
+                <h3>Historique des dépenses</h3>
+                <p class="hint">Clique sur une dépense pour modifier ses détails.</p>
+
+                <div class="form-group">
+                    <label for="category-filter">Catégorie</label>
+                    <select id="category-filter"></select>
+                </div>
+
+                <div class="table-wrap">
+                    <table id="expense-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Catégorie</th>
+                                <th>Paiement</th>
+                                <th>Montant</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="expense-list">
+                            <!-- Les dépenses s'ajouteront ici dynamiquement -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="empty-msg" class="empty-message">Aucune dépense enregistrée pour le moment.</div>
+                <div class="total-display">
+                    <span id="total-label">Total</span> : <span id="total-amount">0</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- PAGE 3 : Revenus et soldes (les deux comptes côte à côte) -->
+        <section id="page-revenus" class="page" hidden>
+            <h2 class="page-title">Revenus et soldes</h2>
+            <p class="hint">Clique sur un compte pour voir le détail.</p>
+
+            <div class="account-tiles">
+                <a href="#revenus/banque" class="account-tile bank">
+                    <span class="tile-label">Banque (virement)</span>
+                    <span class="tile-balance" id="tile-bank-balance">0</span>
+                    <span class="tile-sub">Revenus : <span id="tile-bank-income">0</span></span>
+                    <span class="tile-more">Voir le détail ›</span>
+                </a>
+                <a href="#revenus/cash" class="account-tile cash">
+                    <span class="tile-label">Espèces (cash)</span>
+                    <span class="tile-balance" id="tile-cash-balance">0</span>
+                    <span class="tile-sub">Revenus : <span id="tile-cash-income">0</span></span>
+                    <span class="tile-more">Voir le détail ›</span>
+                </a>
+            </div>
+
+            <p class="total-line">Solde total : <strong id="total-balance">0</strong></p>
+        </section>
+
+        <!-- PAGE 3 bis : Détail d'un compte (banque ou espèces) -->
+        <section id="page-compte" class="page" hidden>
+            <a href="#revenus" class="back-link">‹ Retour aux soldes</a>
+
+            <div class="card">
+                <h3 id="account-title">Compte</h3>
+                <div class="table-wrap">
+                    <table class="summary-table">
+                        <thead>
+                            <tr id="account-summary-head">
+                                <!-- Rempli dynamiquement -->
+                            </tr>
+                        </thead>
+                        <tbody id="account-summary-body">
+                            <!-- Rempli dynamiquement -->
+                        </tbody>
+                    </table>
+                </div>
+                <p id="account-note" class="hint"></p>
+            </div>
+
+            <div class="card" id="bank-card">
+                <h3>Solde bancaire à une date</h3>
+                <p class="hint">Indique le solde de ton compte à une date précise. Les virements, revenus et retraits à partir de cette date sont ensuite ajoutés ou retirés automatiquement.</p>
+                <form id="bank-form">
+                    <div class="form-group">
+                        <label for="bank-date">Date</label>
+                        <div class="date-field">
+                            <input type="text" id="bank-date" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="JJ/MM/AAAA" required>
+                            <button type="button" class="calendar-btn" aria-label="Ouvrir le calendrier">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="bank-amount">Solde bancaire à cette date</label>
+                        <input type="number" id="bank-amount" step="any" placeholder="Ex: 250000" required>
+                    </div>
+                    <button type="submit">Enregistrer le solde</button>
+                    <button type="button" id="bank-clear" class="secondary-btn" hidden>Retirer le solde de référence</button>
+                    <p id="bank-feedback" class="feedback" role="status"></p>
+                </form>
+            </div>
+
+            <div class="card">
+                <h3 id="income-title">Ajouter un revenu</h3>
+                <p class="hint" id="income-target"></p>
+                <form id="income-form">
+                    <!-- Espèces uniquement : d'où vient l'argent ? -->
+                    <div class="form-group" id="income-source-group" hidden>
+                        <label for="income-source">Provenance</label>
+                        <select id="income-source">
+                            <option value="retrait">Retrait de mon compte bancaire</option>
+                            <option value="autre">Autre</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="income-description">Description</label>
+                        <input type="text" id="income-description" placeholder="Ex: Salaire" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="income-amount">Montant</label>
+                        <input type="text" id="income-amount" class="digits-only" inputmode="numeric" pattern="[0-9]*" maxlength="12" autocomplete="off" placeholder="Ex: 300000" required>
+                    </div>
+                    <button type="submit" id="income-submit">Enregistrer le revenu</button>
+                    <p id="income-feedback" class="feedback" role="status"></p>
+                </form>
+            </div>
+
+            <div class="card">
+                <h3>Revenus</h3>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Montant</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="income-list">
+                            <!-- Les revenus s'ajouteront ici dynamiquement -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="income-empty" class="empty-message">Aucun revenu enregistré pour ce compte.</div>
+            </div>
+
+            <!-- Banque uniquement : argent retiré pour les espèces -->
+            <div class="card" id="withdrawals-card">
+                <h3>Retraits vers les espèces</h3>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Montant</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="withdrawal-list">
+                            <!-- Rempli dynamiquement -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="withdrawal-empty" class="empty-message">Aucun retrait enregistré.</div>
+            </div>
+
+            <div class="card">
+                <h3>Dépenses</h3>
+                <p class="hint">Clique sur une dépense pour modifier ses détails.</p>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Catégorie</th>
+                                <th>Montant</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="account-expense-list">
+                            <!-- Rempli dynamiquement -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="account-expense-empty" class="empty-message">Aucune dépense pour ce compte.</div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Fenêtre de modification d'une dépense -->
+    <div id="edit-modal" class="modal" hidden>
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="edit-title">
+            <h3 id="edit-title">Modifier la dépense</h3>
+            <form id="edit-form">
+                <div class="form-group">
+                    <label for="edit-description">Description</label>
+                    <input type="text" id="edit-description" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-amount">Montant</label>
+                    <input type="text" id="edit-amount" class="digits-only" inputmode="numeric" pattern="[0-9]*" maxlength="12" autocomplete="off" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-date">Date</label>
+                    <div class="date-field">
+                        <input type="text" id="edit-date" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="JJ/MM/AAAA" required>
+                        <button type="button" class="calendar-btn" aria-label="Ouvrir le calendrier">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="edit-category">Catégorie</label>
+                    <select id="edit-category" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="edit-method">Paiement</label>
+                    <select id="edit-method">
+                        <option value="cash">Cash</option>
+                        <option value="virement">Virement</option>
+                    </select>
+                </div>
+                <button type="submit">Enregistrer les modifications</button>
+                <button type="button" id="edit-cancel" class="secondary-btn">Annuler</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Calendrier (s'ouvre avec le bouton calendrier des champs de date) -->
+    <div id="calendar-modal" class="modal calendar-modal" hidden>
+        <div class="calendar" role="dialog" aria-modal="true" aria-label="Calendrier">
+            <div class="cal-header">
+                <button type="button" class="cal-nav" data-nav="-12" aria-label="Année précédente">«</button>
+                <button type="button" class="cal-nav" data-nav="-1" aria-label="Mois précédent">‹</button>
+                <div class="cal-title" id="cal-title" aria-live="polite"></div>
+                <button type="button" class="cal-nav" data-nav="1" aria-label="Mois suivant">›</button>
+                <button type="button" class="cal-nav" data-nav="12" aria-label="Année suivante">»</button>
+            </div>
+            <div class="cal-weekdays" aria-hidden="true">
+                <span>Lu</span><span>Ma</span><span>Me</span><span>Je</span><span>Ve</span><span>Sa</span><span>Di</span>
+            </div>
+            <div class="cal-grid" id="cal-grid"></div>
+            <div class="cal-footer">
+                <button type="button" id="cal-today" class="secondary-btn">Aujourd'hui</button>
+                <button type="button" id="cal-close" class="secondary-btn">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lien vers le fichier de script JavaScript (placé juste avant la fin du body) -->
+    <script src="script.js"></script>
+</body>
+</html>
