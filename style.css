@@ -729,3 +729,15 @@ tr.ignored td {
 .modal-card h3 {
     margin-top: 0;
 }
+
+/* Tableau récapitulatif d'un compte : les 5 colonnes doivent tenir sur un téléphone */
+.summary-table th,
+.summary-table td {
+    padding: 8px 3px;
+    font-size: 12px;
+}
+
+.summary-table th {
+    font-size: 11px;
+    line-height: 1.2;
+}
