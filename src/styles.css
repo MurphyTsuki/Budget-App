@@ -462,16 +462,18 @@ h3 {
 }
 
 .nav a.center {
-  position: relative;
-  top: -18px;
+  margin: -8px 0;
+  padding: 0;
+  align-self: center;
 }
 
-/* Bouton « + » : disque taillé à facettes, même matière que le cristal de l'accueil, immobile.
+/* Bouton « + » : disque taillé à facettes, même matière que le cristal de l'accueil, immobile,
+   centré dans la barre et aussi haut qu'elle.
    Les couleurs suivent --accent, donc le thème de chaque compte. */
 .nav .plus {
   position: relative;
-  width: 58px;
-  height: 58px;
+  width: 68px;
+  height: 68px;
   display: grid;
   place-items: center;
   color: #fff;
