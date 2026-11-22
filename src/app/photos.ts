@@ -32,6 +32,9 @@ const SETTINGS_KEY = 'driveSettings';
 const TRASH_KEY = 'drivePendingTrash';
 /** Un peu plus que la durée du message « Annuler » (5 s) */
 const UNDO_DELAY = 6000;
+/** Version du script Google attendue (constante VERSION de google-apps-script/Code.gs) */
+const SCRIPT_VERSION = 2;
+
 /** Plus grand côté de la photo après compression, en pixels */
 const MAX_SIDE = 1280;
 const JPEG_QUALITY = 0.8;
@@ -156,6 +159,8 @@ export class PhotoService {
   readonly lastError = signal('');
   private sending = false;
   private trash = loadTrash();
+  /** Photos de dépenses supprimées, qui attendent d'aller à la corbeille du Drive */
+  readonly pendingTrash = signal(this.trash.length);
 
   constructor() {
     void this.refreshPending().then(() => this.flush());
@@ -172,7 +177,11 @@ export class PhotoService {
   async test(url = this.settings().url): Promise<string> {
     try {
       const reply = await this.post(url, { ping: true });
-      return reply.ok ? '' : (reply.error ?? 'Réponse inattendue du script');
+      if (!reply.ok) return reply.error ?? 'Réponse inattendue du script';
+      if ((reply.version ?? 1) < SCRIPT_VERSION) {
+        return 'Le script répond, mais c’est une ancienne version : dans Google Apps Script, fais Déployer → Gérer les déploiements → crayon → Version : Nouvelle version → Déployer';
+      }
+      return '';
     } catch {
       return 'Script injoignable : vérifie l’adresse et ta connexion';
     }
@@ -196,6 +205,7 @@ export class PhotoService {
     if (!items.length) return;
     this.trash = [...this.trash, ...items];
     saveTrash(this.trash);
+    this.pendingTrash.set(this.trash.length);
     setTimeout(() => void this.flush(), UNDO_DELAY + 200);
   }
 
@@ -225,6 +235,7 @@ export class PhotoService {
           // Photo remplacée : l'ancienne part à la corbeille
           this.trash = [...this.trash, { url: op.photo, opId: op.id, after: 0, replaced: true }];
           saveTrash(this.trash);
+          this.pendingTrash.set(this.trash.length);
         }
         this.store.update(op.id, { photo: reply.url });
         await withStore('readwrite', (s) => s.delete(photo.opId));
@@ -249,6 +260,7 @@ export class PhotoService {
       }
       this.trash = this.trash.filter((t) => t !== item);
       saveTrash(this.trash);
+      this.pendingTrash.set(this.trash.length);
     }
   }
 
@@ -262,7 +274,7 @@ export class PhotoService {
   }
 
   /** Le corps part en texte brut : un envoi JSON déclencherait une vérification que le script Google refuse. */
-  private async post(url: string, body: object): Promise<{ ok: boolean; url?: string; error?: string }> {
+  private async post(url: string, body: object): Promise<{ ok: boolean; url?: string; error?: string; version?: number }> {
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },

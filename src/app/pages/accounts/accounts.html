@@ -52,8 +52,11 @@
       <span class="hint">
         @if (!photos.configured()) {
           Non relié · touche pour relier ton Drive
-        } @else if (photos.pending().size) {
-          {{ photos.pending().size }} photo{{ photos.pending().size > 1 ? 's' : '' }} en attente d’envoi
+        } @else if (photos.lastError()) {
+          Problème avec le script · touche pour voir
+        } @else if (photos.pending().size || photos.pendingTrash()) {
+          {{ photos.pending().size }} envoi{{ photos.pending().size > 1 ? 's' : '' }}
+          et {{ photos.pendingTrash() }} suppression{{ photos.pendingTrash() > 1 ? 's' : '' }} en attente
         } @else {
           Relié · les photos vont dans Volako / catégorie
         }
@@ -106,15 +109,21 @@
         @if (driveMessage(); as m) {
           <p [class.form-error]="m.error" [class.hint]="!m.error" role="status">{{ m.text }}</p>
         }
-        @if (photos.lastError() && photos.pending().size) {
-          <p class="form-error">Dernier envoi échoué : {{ photos.lastError() }}</p>
+        @if (photos.lastError()) {
+          <p class="form-error">Dernier échange avec le script échoué : {{ photos.lastError() }}</p>
+        }
+        @if (photos.pending().size || photos.pendingTrash()) {
+          <p class="hint">
+            En attente : {{ photos.pending().size }} photo{{ photos.pending().size > 1 ? 's' : '' }} à envoyer,
+            {{ photos.pendingTrash() }} à mettre à la corbeille
+          </p>
         }
 
         <button type="button" class="btn primary" [disabled]="testing()" (click)="saveDrive()">
           {{ testing() ? 'Test en cours…' : 'Tester et enregistrer' }}
         </button>
-        @if (photos.pending().size && photos.configured()) {
-          <button type="button" class="btn" (click)="photos.flush()">Réessayer l’envoi des photos en attente</button>
+        @if ((photos.pending().size || photos.pendingTrash()) && photos.configured()) {
+          <button type="button" class="btn" (click)="photos.flush()">Réessayer maintenant</button>
         }
         <button type="button" class="btn" (click)="driveOpen.set(false)">Fermer</button>
       </div>

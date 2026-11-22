@@ -13,13 +13,16 @@ const SECRET = 'COLLE-ICI-LA-CLE-DE-VOLAKO';
 
 const ROOT_FOLDER = 'Volako';
 
+// Version du script : Volako la vérifie au test de connexion pour savoir si le déploiement est à jour
+const VERSION = 2;
+
 function doPost(e) {
   try {
     const body = JSON.parse(e.postData.contents);
     if (body.secret !== SECRET) return reply({ ok: false, error: 'Clé secrète incorrecte' });
 
     // Test de connexion depuis l'application
-    if (body.ping) return reply({ ok: true });
+    if (body.ping) return reply({ ok: true, version: VERSION });
 
     if (body.action === 'trash') return trash(body.url);
 
