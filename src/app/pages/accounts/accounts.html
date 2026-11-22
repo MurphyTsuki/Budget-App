@@ -34,3 +34,64 @@
     <span class="num total-value" [class.negative]="store.totalBalance() < 0">{{ store.totalBalance() | money }}</span>
   </div>
 </div>
+
+<!-- Mes données : export et import en CSV -->
+<div class="section-head"><span class="label">Mes données</span></div>
+<div class="stack tight">
+  <button type="button" class="choice" (click)="exportData()">
+    <span class="bubble"><app-icon name="down" /></span>
+    <span class="choice-main">
+      <span class="choice-title">Exporter mes données (CSV)</span>
+      <span class="hint">Budgets, soldes de référence et toutes les opérations, lisible dans Excel</span>
+    </span>
+  </button>
+  <label class="choice file-choice">
+    <span class="bubble"><app-icon name="up" /></span>
+    <span class="choice-main">
+      <span class="choice-title">Importer un fichier CSV</span>
+      <span class="hint">Un fichier exporté depuis Volako</span>
+    </span>
+    <input type="file" accept=".csv,text/csv" (change)="readFile($event)" />
+  </label>
+</div>
+
+@if (imported(); as file) {
+  <div class="modal" (click)="onBackdropClick($event)">
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="import-title">
+      <div class="label">{{ file.name }}</div>
+      <h2 id="import-title" class="sheet-title">Importer</h2>
+
+      <div class="panel stack tight">
+        <span>{{ file.data.operationCount }} opération{{ file.data.operationCount > 1 ? 's' : '' }}</span>
+        <span>{{ file.data.budgetLines }} ligne{{ file.data.budgetLines > 1 ? 's' : '' }} de budget</span>
+        @if (file.data.months; as m) {
+          <span class="muted">
+            @if (m[0] === m[1]) {
+              {{ monthLabel(m[0]) }}
+            } @else {
+              De {{ monthLabel(m[0]) }} à {{ monthLabel(m[1]) }}
+            }
+          </span>
+        }
+      </div>
+
+      @if (file.data.errors.length) {
+        <p class="form-error page-gap">
+          {{ file.data.errors.length }} ligne{{ file.data.errors.length > 1 ? 's' : '' }} ignorée{{ file.data.errors.length > 1 ? 's' : '' }} :
+          {{ file.data.errors.slice(0, 3).join(' · ') }}{{ file.data.errors.length > 3 ? '…' : '' }}
+        </p>
+      }
+
+      <div class="stack page-gap">
+        <button type="button" class="btn primary" (click)="addMissing()">Ajouter ce qui manque</button>
+        @if (confirmingReplace()) {
+          <p class="hint">Tes données actuelles seront effacées et remplacées par celles du fichier</p>
+        }
+        <button type="button" class="btn danger" (click)="replaceAll()">
+          {{ confirmingReplace() ? 'Confirmer : tout remplacer' : 'Tout remplacer' }}
+        </button>
+        <button type="button" class="btn" (click)="closeImport()">Annuler</button>
+      </div>
+    </div>
+  </div>
+}

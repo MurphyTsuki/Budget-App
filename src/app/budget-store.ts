@@ -12,6 +12,7 @@ import {
   Reference,
   ReferenceKey,
 } from './models';
+import type { VolakoData } from './csv';
 import {
   clearOldData,
   loadBudgets,
@@ -235,5 +236,35 @@ export class BudgetStore {
 
   setReference(key: ReferenceKey, ref: Reference | null): void {
     this.references.update((all) => ({ ...all, [key]: ref }));
+  }
+
+  /* ---------- Import d'un fichier CSV ---------- */
+
+  /** Efface tout et reprend les données du fichier. */
+  replaceAll(data: VolakoData): void {
+    this.operations.set(data.operations);
+    this.references.set(data.references);
+    this.budgets.set(data.budgets);
+  }
+
+  /**
+   * Ajoute seulement ce qui manque : les opérations inconnues (reconnues par leur identifiant),
+   * les budgets des mois qui n'en ont pas et les soldes de référence absents.
+   * Renvoie le nombre d'opérations ajoutées.
+   */
+  addMissing(data: VolakoData): number {
+    const known = new Set(this.operations().map((op) => op.id));
+    const added = data.operations.filter((op) => op.parentId === null && !known.has(op.id));
+    const addedIds = new Set(added.map((op) => op.id));
+    // Les frais suivent leur opération : ajoutés seulement avec elle
+    const fees = data.operations.filter((op) => op.parentId !== null && addedIds.has(op.parentId) && !known.has(op.id));
+
+    this.operations.update((list) => [...list, ...added, ...fees]);
+    this.budgets.update((all) => ({ ...data.budgets, ...all }));
+    this.references.update((all) => ({
+      banque: all.banque ?? data.references.banque,
+      mvola: all.mvola ?? data.references.mvola,
+    }));
+    return added.length;
   }
 }
