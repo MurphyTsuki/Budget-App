@@ -1,4 +1,4 @@
-# Mon Budget (Angular)
+# Volako
 
 Application de budget mensuel : dépenses en cash ou par virement, graphique par catégorie,
 soldes de la banque et des espèces. Version Angular de l'application HTML/CSS/JS d'origine,
