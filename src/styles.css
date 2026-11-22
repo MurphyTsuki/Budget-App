@@ -477,7 +477,11 @@ h3 {
   display: grid;
   place-items: center;
   color: #fff;
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.45));
+  border-radius: 50%;
+  /* Ombre posée sur le disque plutôt qu'un filtre, et calque à part : le rendu reste stable sous le flou de la barre */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.45);
+  isolation: isolate;
+  will-change: transform;
   transition: transform 0.12s;
 }
 
@@ -493,24 +497,11 @@ h3 {
   overflow: visible;
 }
 
-.plus-gem .g-light {
-  stop-color: color-mix(in srgb, #fff 55%, var(--accent));
-}
-
-.plus-gem .g-main {
-  stop-color: var(--accent);
-}
-
-.plus-gem .g-dark {
-  stop-color: color-mix(in srgb, #000 35%, var(--accent));
-}
-
-/* Le « + » est gravé en blanc, comme le pourcentage du grand cristal */
+/* Le « + » en blanc, comme le pourcentage du grand cristal */
 .nav .plus .icon {
   position: relative;
   width: 26px;
   height: 26px;
-  filter: drop-shadow(0 1px 1px rgba(20, 17, 15, 0.55));
 }
 
 .nav .plus .icon svg {
