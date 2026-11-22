@@ -1,13 +1,13 @@
 @if (line(); as l) {
-  <div class="back-head">
+  <div class="back-head" [style.--c]="l.category.color">
     <a class="round-btn" [routerLink]="['/budget', current()]" aria-label="Retour au budget"><app-icon name="left" /></a>
     <span>
       <span class="label">Budget · {{ monthTitle() }}</span>
-      <span class="account-title"><span class="cat-dot" [style.--c]="l.category.color"></span>{{ l.category.name }}</span>
+      <span class="account-title">{{ l.category.name }}</span>
     </span>
   </div>
 
-  <div class="detail-ring" [style.--ring]="ringColor()">
+  <div class="detail-ring" [style.--c]="l.category.color" [style.--ring]="ringColor()">
     <svg viewBox="0 0 120 120" aria-hidden="true">
       <circle cx="60" cy="60" r="50" class="ring-track" />
       <circle cx="60" cy="60" r="50" class="ring-value" [attr.stroke-dasharray]="ring()" />

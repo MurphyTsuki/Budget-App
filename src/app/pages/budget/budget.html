@@ -50,9 +50,9 @@
   <div class="budget-lines">
     @for (line of v.lines; track line.category.name) {
       <a class="bline-row" [routerLink]="['/budget', current(), 'categorie', line.category.name]" [style.--c]="line.category.color">
-        <span class="bubble"><app-icon [name]="line.category.icon" /></span>
+        <span class="bubble tinted"><app-icon [name]="line.category.icon" /></span>
         <span class="bline-main">
-          <span class="bline-name"><span class="cat-dot"></span>{{ line.category.name }}</span>
+          <span class="bline-name">{{ line.category.name }}</span>
           <span class="bar {{ percentClass(line.percent) }}">
             <span [style.width.%]="line.percent === null ? 0 : line.percent > 100 ? 100 : line.percent"></span>
           </span>

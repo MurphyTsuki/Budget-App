@@ -13,6 +13,7 @@
         type="button"
         class="cat-tile"
         role="radio"
+        [style.--c]="c.color"
         [attr.aria-checked]="category() === c.name"
         [attr.aria-label]="c.name"
         (click)="category.set(c.name)"

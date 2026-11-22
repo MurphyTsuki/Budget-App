@@ -266,18 +266,14 @@ h3 {
   border-radius: 17px;
 }
 
-/* Point de couleur d'une catégorie */
-.cat-dot {
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  margin-right: 8px;
-  border-radius: 50%;
-  background: var(--c);
-  vertical-align: 2px;
+/* Pastille d'une catégorie : sa couleur (donnée par --c) */
+.bubble.tinted {
+  color: var(--c);
+  background: color-mix(in srgb, var(--c) 14%, transparent);
+  border-color: color-mix(in srgb, var(--c) 30%, transparent);
 }
 
-/* Barre de progression : neutre, ambre en alerte, rouge en dépassement */
+/* Barre de progression lumineuse, à la couleur de la catégorie, rouge en dépassement */
 .bar {
   display: block;
   height: 4px;
@@ -290,7 +286,8 @@ h3 {
   display: block;
   height: 100%;
   border-radius: 4px;
-  background: color-mix(in srgb, var(--text) 55%, transparent);
+  background: var(--c, var(--accent));
+  box-shadow: 0 0 10px var(--c, var(--accent));
   transition: width 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
@@ -689,7 +686,7 @@ h3 {
 }
 
 .cat-tile .icon {
-  color: var(--muted);
+  color: var(--c);
 }
 
 .cat-tile span {
@@ -701,8 +698,9 @@ h3 {
 }
 
 .cat-tile[aria-checked='true'] {
-  border-color: var(--accent);
-  background: var(--panel-strong);
+  border-color: var(--c);
+  background: color-mix(in srgb, var(--c) 12%, transparent);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--c) 22%, transparent);
 }
 
 .cat-tile.create {
@@ -1138,12 +1136,9 @@ h3 {
   height: 5px;
 }
 
-.bar.warn > span {
-  background: var(--warn);
-}
-
 .bar.over > span {
   background: var(--danger);
+  box-shadow: 0 0 10px var(--danger);
 }
 
 /* Signature : une petite facette marque les lignes en alerte */
@@ -1215,12 +1210,13 @@ h3 {
 }
 
 .bline:focus-within {
-  border-color: var(--accent);
-  background: var(--panel-strong);
+  border-color: var(--c);
+  background: color-mix(in srgb, var(--c) 10%, transparent);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--c) 28%, transparent);
 }
 
 .bline:focus-within .bline-name {
-  color: var(--text);
+  color: var(--c);
 }
 
 .footbar {
@@ -1272,7 +1268,8 @@ h3 {
 }
 
 .ring-value {
-  stroke: var(--ring, color-mix(in srgb, var(--text) 55%, transparent));
+  stroke: var(--ring, var(--c));
+  filter: drop-shadow(0 0 6px var(--ring, var(--c)));
   stroke-linecap: round;
   transform: rotate(-90deg);
   transform-origin: center;

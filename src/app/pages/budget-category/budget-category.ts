@@ -39,11 +39,10 @@ export class BudgetCategoryComponent {
     return line ? round2(line.budget - line.spent) : 0;
   });
 
-  /** Couleur de l'anneau : neutre, ambre en alerte, rouge en dépassement */
-  protected readonly ringColor = computed(() => {
-    const state = percentClass(this.line()?.percent ?? null);
-    return state === 'over' ? 'var(--danger)' : state === 'warn' ? 'var(--warn)' : null;
-  });
+  /** L'anneau prend la couleur de la catégorie, et passe au rouge en dépassement */
+  protected readonly ringColor = computed(() =>
+    percentClass(this.line()?.percent ?? null) === 'over' ? 'var(--danger)' : null,
+  );
 
   protected readonly ring = computed(() => {
     const percent = Math.min(this.line()?.percent ?? 0, 100);
