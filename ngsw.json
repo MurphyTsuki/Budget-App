@@ -1,0 +1,151 @@
+{
+  "configVersion": 1,
+  "timestamp": 1795368140454,
+  "index": "/Budget-App/index.html",
+  "assetGroups": [
+    {
+      "name": "app",
+      "installMode": "prefetch",
+      "updateMode": "prefetch",
+      "cacheQueryOptions": {
+        "ignoreVary": true
+      },
+      "urls": [
+        "/Budget-App/favicon.ico",
+        "/Budget-App/index.html",
+        "/Budget-App/main-O7POINBC.js",
+        "/Budget-App/manifest.webmanifest",
+        "/Budget-App/styles-GFPSNMHB.css"
+      ],
+      "patterns": []
+    },
+    {
+      "name": "assets",
+      "installMode": "lazy",
+      "updateMode": "prefetch",
+      "cacheQueryOptions": {
+        "ignoreVary": true
+      },
+      "urls": [
+        "/Budget-App/icons/apple-touch-icon.png",
+        "/Budget-App/icons/volako-192.png",
+        "/Budget-App/icons/volako-512.png",
+        "/Budget-App/icons/volako-maskable-192.png",
+        "/Budget-App/icons/volako-maskable-512.png",
+        "/Budget-App/media/jetbrains-mono-cyrillic-400-normal-C5JECUCT.woff2",
+        "/Budget-App/media/jetbrains-mono-cyrillic-400-normal-FGCZYWMY.woff",
+        "/Budget-App/media/jetbrains-mono-cyrillic-500-normal-ABSXDA7Y.woff",
+        "/Budget-App/media/jetbrains-mono-cyrillic-500-normal-VZRFRX2D.woff2",
+        "/Budget-App/media/jetbrains-mono-cyrillic-ext-400-normal-C7IFWGF6.woff2",
+        "/Budget-App/media/jetbrains-mono-cyrillic-ext-400-normal-PWXUA557.woff",
+        "/Budget-App/media/jetbrains-mono-cyrillic-ext-500-normal-3HPBCRGM.woff2",
+        "/Budget-App/media/jetbrains-mono-cyrillic-ext-500-normal-ALWIYOP7.woff",
+        "/Budget-App/media/jetbrains-mono-greek-400-normal-JJNQZMPZ.woff",
+        "/Budget-App/media/jetbrains-mono-greek-400-normal-O7JTTR3P.woff2",
+        "/Budget-App/media/jetbrains-mono-greek-500-normal-RHDMXKAE.woff2",
+        "/Budget-App/media/jetbrains-mono-greek-500-normal-S2QQDTY6.woff",
+        "/Budget-App/media/jetbrains-mono-latin-400-normal-3OOWLGQ2.woff2",
+        "/Budget-App/media/jetbrains-mono-latin-400-normal-WDD34GPP.woff",
+        "/Budget-App/media/jetbrains-mono-latin-500-normal-ETEQEOVZ.woff",
+        "/Budget-App/media/jetbrains-mono-latin-500-normal-V4XIP5OW.woff2",
+        "/Budget-App/media/jetbrains-mono-latin-ext-400-normal-55RNMRQS.woff",
+        "/Budget-App/media/jetbrains-mono-latin-ext-400-normal-JVR3IR4Z.woff2",
+        "/Budget-App/media/jetbrains-mono-latin-ext-500-normal-2BKZW4LT.woff",
+        "/Budget-App/media/jetbrains-mono-latin-ext-500-normal-W67NWU5E.woff2",
+        "/Budget-App/media/jetbrains-mono-vietnamese-400-normal-7ULXAK72.woff",
+        "/Budget-App/media/jetbrains-mono-vietnamese-400-normal-KU7YLUPA.woff2",
+        "/Budget-App/media/jetbrains-mono-vietnamese-500-normal-HO6446ON.woff2",
+        "/Budget-App/media/jetbrains-mono-vietnamese-500-normal-LNSQLO7C.woff",
+        "/Budget-App/media/outfit-latin-200-normal-C4C7ZHVD.woff",
+        "/Budget-App/media/outfit-latin-200-normal-RQ3YAOYT.woff2",
+        "/Budget-App/media/outfit-latin-300-normal-ADJADXIV.woff",
+        "/Budget-App/media/outfit-latin-300-normal-FSOJGERR.woff2",
+        "/Budget-App/media/outfit-latin-400-normal-MJX636HN.woff",
+        "/Budget-App/media/outfit-latin-400-normal-WPZHQ72E.woff2",
+        "/Budget-App/media/outfit-latin-500-normal-5NAIAZI7.woff",
+        "/Budget-App/media/outfit-latin-500-normal-PXR3PSSK.woff2",
+        "/Budget-App/media/outfit-latin-ext-200-normal-6ASWFHHQ.woff2",
+        "/Budget-App/media/outfit-latin-ext-200-normal-J7UGQMYX.woff",
+        "/Budget-App/media/outfit-latin-ext-300-normal-4SZFWLKT.woff2",
+        "/Budget-App/media/outfit-latin-ext-300-normal-KENQD6NO.woff",
+        "/Budget-App/media/outfit-latin-ext-400-normal-NXIOCYCR.woff",
+        "/Budget-App/media/outfit-latin-ext-400-normal-ZJBXP5IH.woff2",
+        "/Budget-App/media/outfit-latin-ext-500-normal-6CLYNG6P.woff",
+        "/Budget-App/media/outfit-latin-ext-500-normal-LUXIOPCH.woff2"
+      ],
+      "patterns": []
+    }
+  ],
+  "dataGroups": [],
+  "hashTable": {
+    "/Budget-App/favicon.ico": "1f986fd587a9952ff8dffb25d7c0d75f483f342a",
+    "/Budget-App/icons/apple-touch-icon.png": "6b555697584e8bd579a67b68424894e7431a9b25",
+    "/Budget-App/icons/volako-192.png": "f300f59d92e51d0ac69499d322ca36cefd76b625",
+    "/Budget-App/icons/volako-512.png": "ab16a329766478c5f4c3692eaca28b660bd99765",
+    "/Budget-App/icons/volako-maskable-192.png": "0d28d97c6372b27cdd15ccdf23be5996e6a76e26",
+    "/Budget-App/icons/volako-maskable-512.png": "83ab95982d333c7e3cb4d87f5796f7a68c47abe7",
+    "/Budget-App/index.html": "c54e8e81a19caaeab4325926592d767a98110471",
+    "/Budget-App/main-O7POINBC.js": "8b4620188830e94636e163d3258e8ffe9a1fc960",
+    "/Budget-App/manifest.webmanifest": "fb1a1f3db80ce581a25f853b96301b4a40186d92",
+    "/Budget-App/media/jetbrains-mono-cyrillic-400-normal-C5JECUCT.woff2": "c0febe33e1c676bf7f92c1554af4def88d18d2b2",
+    "/Budget-App/media/jetbrains-mono-cyrillic-400-normal-FGCZYWMY.woff": "a068788da3ded3aa899d766a9a77c67c940fe008",
+    "/Budget-App/media/jetbrains-mono-cyrillic-500-normal-ABSXDA7Y.woff": "50b9621f1e8d0dbe96a29ae3083f5c37a0371f63",
+    "/Budget-App/media/jetbrains-mono-cyrillic-500-normal-VZRFRX2D.woff2": "413718fbfbcc5f450f9284e049d75b6a846412e6",
+    "/Budget-App/media/jetbrains-mono-cyrillic-ext-400-normal-C7IFWGF6.woff2": "24874427c1b67fb31f12c856374d4a851d9046af",
+    "/Budget-App/media/jetbrains-mono-cyrillic-ext-400-normal-PWXUA557.woff": "8e2ca34a724249f138f22c8a382d6431143344ca",
+    "/Budget-App/media/jetbrains-mono-cyrillic-ext-500-normal-3HPBCRGM.woff2": "7edb024fa30c51090e6efb192f28a5dcf9a30afc",
+    "/Budget-App/media/jetbrains-mono-cyrillic-ext-500-normal-ALWIYOP7.woff": "062318dd15b673c79ca8f1c7d0a7f0c2733f7093",
+    "/Budget-App/media/jetbrains-mono-greek-400-normal-JJNQZMPZ.woff": "b85e433cacb1b619f36487e6da105050499c0832",
+    "/Budget-App/media/jetbrains-mono-greek-400-normal-O7JTTR3P.woff2": "6ca72a3ee36145658241bb162ea48ea11931bfbd",
+    "/Budget-App/media/jetbrains-mono-greek-500-normal-RHDMXKAE.woff2": "294086fa120ac2848e51b57b7e9366092dc52ef3",
+    "/Budget-App/media/jetbrains-mono-greek-500-normal-S2QQDTY6.woff": "1ff9a3c1d7d2e26d722905e04542be44a92e15fa",
+    "/Budget-App/media/jetbrains-mono-latin-400-normal-3OOWLGQ2.woff2": "3ae621518210e658f2cec928e0c3aede6d0cefe2",
+    "/Budget-App/media/jetbrains-mono-latin-400-normal-WDD34GPP.woff": "3e355855b3176861039c7ad0426c9c54d706ac40",
+    "/Budget-App/media/jetbrains-mono-latin-500-normal-ETEQEOVZ.woff": "d7301c2c3effa297e95a354b1590551b413329db",
+    "/Budget-App/media/jetbrains-mono-latin-500-normal-V4XIP5OW.woff2": "35c2a72b759f5a19834ff0ddd7f94a9cbe557860",
+    "/Budget-App/media/jetbrains-mono-latin-ext-400-normal-55RNMRQS.woff": "3193910ee29ddd5328698557996f3244e58bf6c6",
+    "/Budget-App/media/jetbrains-mono-latin-ext-400-normal-JVR3IR4Z.woff2": "b015819f8db53ae578647399c4726369f13586e5",
+    "/Budget-App/media/jetbrains-mono-latin-ext-500-normal-2BKZW4LT.woff": "a345d4178b81875c661927f50463e09d7fab9be3",
+    "/Budget-App/media/jetbrains-mono-latin-ext-500-normal-W67NWU5E.woff2": "be0c59f306e164cd2b96a81632150a6f4cec6d63",
+    "/Budget-App/media/jetbrains-mono-vietnamese-400-normal-7ULXAK72.woff": "c1af0f8bf4b100583dbdef31e466cefec309584a",
+    "/Budget-App/media/jetbrains-mono-vietnamese-400-normal-KU7YLUPA.woff2": "a7e229afa713c434211e685206ef2d8dd9d65db0",
+    "/Budget-App/media/jetbrains-mono-vietnamese-500-normal-HO6446ON.woff2": "08f363741025da4ab10a958fbd9d114287a4a5ec",
+    "/Budget-App/media/jetbrains-mono-vietnamese-500-normal-LNSQLO7C.woff": "d3a266ba820ebe1643c21218fd688fb40a2868dc",
+    "/Budget-App/media/outfit-latin-200-normal-C4C7ZHVD.woff": "44bede047fc6523bb5cad729f497916f6151bee4",
+    "/Budget-App/media/outfit-latin-200-normal-RQ3YAOYT.woff2": "a25603480c58e3f73c38ef550e2382ff7ca3126c",
+    "/Budget-App/media/outfit-latin-300-normal-ADJADXIV.woff": "4b4ed5efbd4f9c432a8676781e19fae8f82a9dbb",
+    "/Budget-App/media/outfit-latin-300-normal-FSOJGERR.woff2": "41d21f5ccd90159ea6072dce1743b0fca7cd6a41",
+    "/Budget-App/media/outfit-latin-400-normal-MJX636HN.woff": "3902cf4a63a45950572addb8bc5b77ecb1893901",
+    "/Budget-App/media/outfit-latin-400-normal-WPZHQ72E.woff2": "692b8f6440183da29347a7efaa8d28edbe835401",
+    "/Budget-App/media/outfit-latin-500-normal-5NAIAZI7.woff": "c34de5f6d6f33d0bc4473ccf5f45dbb959490f0a",
+    "/Budget-App/media/outfit-latin-500-normal-PXR3PSSK.woff2": "55b958c2e4b8053ab7f9c3780906cb9600e50843",
+    "/Budget-App/media/outfit-latin-ext-200-normal-6ASWFHHQ.woff2": "4f2b74cb3641ad8cba1ec25f1a64dc9171ee6eee",
+    "/Budget-App/media/outfit-latin-ext-200-normal-J7UGQMYX.woff": "24812786a0e087103e3c4a2e82eece66c1b387c6",
+    "/Budget-App/media/outfit-latin-ext-300-normal-4SZFWLKT.woff2": "3cd7c63bdbb6a350c97e074bdd265feb40b14fa3",
+    "/Budget-App/media/outfit-latin-ext-300-normal-KENQD6NO.woff": "0f72cb681e831daabce3a61cd13853fd180434b6",
+    "/Budget-App/media/outfit-latin-ext-400-normal-NXIOCYCR.woff": "12762916ba7b9b0796c0c94df49050f7bdd79b84",
+    "/Budget-App/media/outfit-latin-ext-400-normal-ZJBXP5IH.woff2": "0458c8bbf863602f879f5f011b50f44e6d25e71c",
+    "/Budget-App/media/outfit-latin-ext-500-normal-6CLYNG6P.woff": "0b2a39704aec442339498e1e01f17d29d9f5ec4f",
+    "/Budget-App/media/outfit-latin-ext-500-normal-LUXIOPCH.woff2": "ffe08eb668eb47e9849b25bf93d0bd553fdacca0",
+    "/Budget-App/styles-GFPSNMHB.css": "67e75b03374650c12e411ca6ccded899c58c814d"
+  },
+  "navigationUrls": [
+    {
+      "positive": true,
+      "regex": "^\\/.*$"
+    },
+    {
+      "positive": false,
+      "regex": "^\\/(?:.+\\/)?[^/]*\\.[^/]*$"
+    },
+    {
+      "positive": false,
+      "regex": "^\\/(?:.+\\/)?[^/]*__[^/]*$"
+    },
+    {
+      "positive": false,
+      "regex": "^\\/(?:.+\\/)?[^/]*__[^/]*\\/.*$"
+    }
+  ],
+  "navigationRequestStrategy": "performance"
+}
