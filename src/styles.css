@@ -530,6 +530,11 @@ h3 {
   animation: toast-in 0.25s ease-out;
 }
 
+/* Mise à jour disponible : au-dessus des autres messages */
+.toast.update {
+  bottom: calc(160px + var(--safe-bottom));
+}
+
 .toast.error {
   border-color: color-mix(in srgb, var(--danger) 50%, transparent);
   color: var(--danger);

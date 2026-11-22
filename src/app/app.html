@@ -12,6 +12,14 @@
   </div>
 }
 
+<!-- Nouvelle version téléchargée (PWA) -->
+@if (updateReady()) {
+  <div class="toast update" role="status">
+    <span>Nouvelle version de Volako</span>
+    <button type="button" class="toast-undo" (click)="reload()">Mettre à jour</button>
+  </div>
+}
+
 <!-- Barre de navigation flottante, bouton « + » au centre -->
 <nav class="nav" aria-label="Menu principal">
   @for (t of tabs; track t.id) {

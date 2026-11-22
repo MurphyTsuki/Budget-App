@@ -1,6 +1,7 @@
-import { Component, computed, effect, inject } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
+import { SwUpdate } from '@angular/service-worker';
 import { filter, map } from 'rxjs';
 
 import { EditOpModalComponent } from './components/edit-op-modal/edit-op-modal';
@@ -31,6 +32,10 @@ function mix(hex: string, other: string, part: number): string {
 export class App {
   protected readonly ui = inject(UiService);
   private readonly router = inject(Router);
+  private readonly updates = inject(SwUpdate);
+
+  /** Une nouvelle version de Volako est téléchargée : elle s'appliquera au rechargement */
+  protected readonly updateReady = signal(false);
 
   private readonly url = toSignal(
     this.router.events.pipe(
@@ -56,6 +61,10 @@ export class App {
     { id: 'comptes', label: 'Comptes', icon: 'wallet', link: '/comptes' },
   ];
 
+  protected reload(): void {
+    document.location.reload();
+  }
+
   private readonly theme = computed(() => {
     const [page, account] = this.path();
     return page === 'comptes' ? (THEMES[account] ?? '') : '';
@@ -71,6 +80,16 @@ export class App {
   });
 
   constructor() {
+    // PWA : prévenir quand une nouvelle version est prête, et la chercher à chaque retour sur l'appli
+    if (this.updates.isEnabled) {
+      this.updates.versionUpdates
+        .pipe(filter((event) => event.type === 'VERSION_READY'))
+        .subscribe(() => this.updateReady.set(true));
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') void this.updates.checkForUpdate();
+      });
+    }
+
     // Chaque compte a ses couleurs : la BRED, Dota 2 (espèces) et MVola
     effect(() => {
       const theme = this.theme();
