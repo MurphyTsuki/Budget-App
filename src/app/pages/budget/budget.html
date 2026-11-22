@@ -52,12 +52,17 @@
       <a class="bline-row" [routerLink]="['/budget', current(), 'categorie', line.category.name]" [style.--c]="line.category.color">
         <span class="bubble"><app-icon [name]="line.category.icon" /></span>
         <span class="bline-main">
-          <span class="bline-name">{{ line.category.name }}</span>
-          <span class="bar" [class.over]="(line.percent ?? 0) >= 100">
+          <span class="bline-name"><span class="cat-dot"></span>{{ line.category.name }}</span>
+          <span class="bar {{ percentClass(line.percent) }}">
             <span [style.width.%]="line.percent === null ? 0 : line.percent > 100 ? 100 : line.percent"></span>
           </span>
         </span>
-        <span class="bline-pc num {{ percentClass(line.percent) }}">{{ line.percent === null ? '—' : line.percent + '%' }}</span>
+        <span class="bline-pc num {{ percentClass(line.percent) }}">
+          @if (percentClass(line.percent); as state) {
+            <span class="facet {{ state }}" aria-hidden="true"></span>
+          }
+          {{ line.percent === null ? '—' : line.percent + '%' }}
+        </span>
         <app-icon name="right" class="faint" />
       </a>
     }

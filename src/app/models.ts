@@ -95,5 +95,3 @@ export function findCategory(name: string | null): Category {
 export function isCategory(name: unknown): name is string {
   return CATEGORIES.some((c) => c.name === name);
 }
-
-export const INCOME_COLOR = '#7fd4a8';

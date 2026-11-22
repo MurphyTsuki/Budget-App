@@ -27,7 +27,7 @@
       <h2 id="choice-title" class="sheet-title">Quel type ?</h2>
       <div class="stack tight">
         @for (c of choices; track c.kind) {
-          <button type="button" class="choice" [style.--c]="c.color" (click)="choose(c.kind)">
+          <button type="button" class="choice" (click)="choose(c.kind)">
             <span class="bubble"><app-icon [name]="c.icon" /></span>
             <span class="choice-main">
               <span class="choice-title">{{ c.title }}</span>

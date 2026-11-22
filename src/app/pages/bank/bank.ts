@@ -9,10 +9,10 @@ import { MoneyPipe } from '../../pipes';
 import { monthOf, round2, todayISO } from '../../utils';
 
 /** Les trois façons de dépenser depuis la banque */
-const EXPENSE_CHOICES: { kind: SheetKind; title: string; text: string; icon: string; color: string }[] = [
-  { kind: 'achat-en-ligne', title: 'Achat en ligne', text: 'Tu choisis la catégorie parmi les 12', icon: 'cart', color: '#00c1f2' },
-  { kind: 'retrait-banque', title: 'Retrait bancaire', text: 'Ajouté automatiquement aux espèces · hors budget', icon: 'out', color: '#e2432c' },
-  { kind: 'virement', title: 'Virement bancaire', text: 'Compté automatiquement dans Imprévu', icon: 'send', color: '#ef7466' },
+const EXPENSE_CHOICES: { kind: SheetKind; title: string; text: string; icon: string }[] = [
+  { kind: 'achat-en-ligne', title: 'Achat en ligne', text: 'Tu choisis la catégorie parmi les 12', icon: 'cart' },
+  { kind: 'retrait-banque', title: 'Retrait bancaire', text: 'Ajouté automatiquement aux espèces · hors budget', icon: 'out' },
+  { kind: 'virement', title: 'Virement bancaire', text: 'Compté automatiquement dans Imprévu', icon: 'send' },
 ];
 
 /** Compte bancaire (BRED) : solde, solde de référence, revenus et dépenses. Adresse : #/comptes/banque */

@@ -51,8 +51,8 @@ export class AddExpenseComponent {
           ? addDaysISO(todayISO(), -1)
           : parseFrDate(this.otherDate().trim());
 
-    if (amount === null) return this.ui.notify('Indique un montant.', true);
-    if (!category) return this.ui.notify('Choisis une catégorie.', true);
+    if (amount === null) return this.ui.notify('Indique un montant', true);
+    if (!category) return this.ui.notify('Choisis une catégorie', true);
     if (!date) return this.ui.notify(DATE_ERROR, true);
 
     // Sans libellé, la dépense prend le nom de sa catégorie

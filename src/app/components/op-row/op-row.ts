@@ -1,7 +1,7 @@
 import { Component, computed, inject, input } from '@angular/core';
 
 import { BudgetStore } from '../../budget-store';
-import { ACCOUNTS, Channel, INCOME_COLOR, Operation, findCategory } from '../../models';
+import { ACCOUNTS, Channel, Operation, findCategory } from '../../models';
 import { MoneyPipe } from '../../pipes';
 import { UiService } from '../../ui.service';
 import { formatMoney, isoToFr } from '../../utils';
@@ -16,9 +16,9 @@ const CHANNEL_LABELS: Record<Channel, string> = {
 };
 
 const MOVE_LABELS = {
-  'retrait-banque': { sub: 'Banque → espèces', icon: 'out', color: '#e2432c' },
-  'depot-mvola': { sub: 'Espèces → MVola', icon: 'down', color: '#54d68c' },
-  'retrait-mvola': { sub: 'MVola → espèces', icon: 'up', color: '#ef7466' },
+  'retrait-banque': { sub: 'Banque → espèces', icon: 'out' },
+  'depot-mvola': { sub: 'Espèces → MVola', icon: 'down' },
+  'retrait-mvola': { sub: 'MVola → espèces', icon: 'up' },
 };
 
 /**
@@ -29,10 +29,10 @@ const MOVE_LABELS = {
 @Component({
   selector: 'app-op-row',
   template: `
-    <span class="bubble" [style.--c]="look().color"><app-icon [name]="look().icon" /></span>
+    <span class="bubble"><app-icon [name]="look().icon" /></span>
     <span class="op-info">
       <span class="op-title">{{ op().description }}</span>
-      <span class="op-sub">{{ look().sub }}@if (fees(); as f) { · frais {{ f }}}@if (showDate()) { · {{ date() }}}</span>
+      <span class="op-sub">@if (look().dot; as dot) {<span class="cat-dot" [style.--c]="dot"></span>}{{ look().sub }}@if (fees(); as f) { · frais {{ f }}}@if (showDate()) { · {{ date() }}}</span>
     </span>
     <span class="op-amount num" [class.in]="op().kind === 'revenu'" [class.muted]="look().move">
       {{ look().sign }}{{ op().amount | money }}
@@ -70,13 +70,13 @@ export class OpRowComponent {
     if (op.kind === 'depense') {
       const category = findCategory(op.category);
       const how = op.channel ? CHANNEL_LABELS[op.channel] : ACCOUNTS[op.account].name;
-      return { icon: category.icon, color: category.color, sub: `${category.name} · ${how}`, sign: '− ', move: false };
+      return { icon: category.icon, dot: category.color, sub: `${category.name} · ${how}`, sign: '− ', move: false };
     }
     if (op.kind === 'revenu') {
-      return { icon: 'coin', color: INCOME_COLOR, sub: `Revenu · ${ACCOUNTS[op.account].name}`, sign: '+ ', move: false };
+      return { icon: 'coin', dot: null, sub: `Revenu · ${ACCOUNTS[op.account].name}`, sign: '+ ', move: false };
     }
     const move = MOVE_LABELS[op.kind];
-    return { icon: move.icon, color: move.color, sub: `${move.sub} · hors budget`, sign: '', move: true };
+    return { icon: move.icon, dot: null, sub: `${move.sub} · hors budget`, sign: '', move: true };
   });
 
   protected edit(): void {

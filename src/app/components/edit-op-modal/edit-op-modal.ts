@@ -94,10 +94,10 @@ export class EditOpModalComponent {
     const date = parseFrDate(this.date());
     const fees = this.fees().trim() === '' ? 0 : parseNumber(this.fees());
 
-    if (!description) return this.error.set('Le libellé est obligatoire.');
-    if (amount === null) return this.error.set('Montant invalide.');
+    if (!description) return this.error.set('Le libellé est obligatoire');
+    if (amount === null) return this.error.set('Montant invalide');
     if (!date) return this.error.set(DATE_ERROR);
-    if (fees === null) return this.error.set('Frais invalides.');
+    if (fees === null) return this.error.set('Frais invalides');
 
     const changes = { description, amount, date, ...(this.hasCategory() ? { category: this.category() } : {}) };
     this.store.update(op.id, changes, this.hasFees() ? fees : undefined);

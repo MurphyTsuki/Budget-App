@@ -175,10 +175,10 @@ export class OpSheetComponent {
       description = config.description.fallback;
     }
 
-    if (amount === null) return this.error.set('Montant invalide.');
-    if (config.description?.required && !description) return this.error.set('Le libellé est obligatoire.');
-    if (config.category && !this.category()) return this.error.set('Choisis une catégorie.');
-    if (fees === null) return this.error.set('Frais invalides.');
+    if (amount === null) return this.error.set('Montant invalide');
+    if (config.description?.required && !description) return this.error.set('Le libellé est obligatoire');
+    if (config.category && !this.category()) return this.error.set('Choisis une catégorie');
+    if (fees === null) return this.error.set('Frais invalides');
     if (!date) return this.error.set(DATE_ERROR);
 
     this.store.add(config.build(amount, description, date, this.category()), fees);

@@ -69,10 +69,10 @@ export class BudgetFormComponent {
     for (const c of CATEGORIES) {
       const text = this.values()[c.name]?.trim() ?? '';
       const amount = text === '' ? 0 : parseNumber(text);
-      if (amount === null) return this.error.set(`Montant invalide pour ${c.name}.`);
+      if (amount === null) return this.error.set(`Montant invalide pour ${c.name}`);
       amounts[c.name] = amount;
     }
-    if (this.total() <= 0) return this.error.set('Indique au moins un montant.');
+    if (this.total() <= 0) return this.error.set('Indique au moins un montant');
 
     if (!this.confirming()) {
       this.confirming.set(true);
@@ -81,7 +81,7 @@ export class BudgetFormComponent {
 
     const isEdit = this.view().budget !== null;
     if (!this.store.saveBudget(this.current(), amounts)) {
-      return this.error.set('Plus aucune modification possible pour ce mois.');
+      return this.error.set('Plus aucune modification possible pour ce mois');
     }
     this.ui.notify(isEdit ? 'Budget modifié' : 'Budget validé');
     void this.router.navigate(['/budget', this.current()]);

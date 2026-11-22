@@ -25,7 +25,7 @@
       @if (reference(); as ref) {
         <span class="ref-value">{{ ref.amount | money }} <span class="muted">au {{ ref.date | frDate }}</span></span>
       } @else {
-        <span class="ref-value muted">Aucun · toucher pour en définir un</span>
+        <span class="ref-value muted">Aucun, touche pour en définir un</span>
       }
     </span>
     <app-icon name="pen" class="muted" />

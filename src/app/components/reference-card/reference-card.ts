@@ -44,7 +44,7 @@ export class ReferenceCardComponent {
     // Le solde peut être négatif (découvert)
     const amount = parseNumber(this.amount(), true);
     if (!date) return this.ui.notify(DATE_ERROR, true);
-    if (amount === null) return this.ui.notify('Montant invalide.', true);
+    if (amount === null) return this.ui.notify('Montant invalide', true);
 
     this.store.setReference(this.account(), { date, amount });
     this.editing.set(false);

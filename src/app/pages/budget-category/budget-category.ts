@@ -7,7 +7,7 @@ import { OpRowComponent } from '../../components/op-row/op-row';
 import { DEFAULT_SORT, Sort, SortChipsComponent, sortOperations } from '../../components/sort-chips/sort-chips';
 import { MoneyPipe } from '../../pipes';
 import { monthLabel, round2 } from '../../utils';
-import { routeMonth } from '../budget/budget';
+import { percentClass, routeMonth } from '../budget/budget';
 
 /** Circonférence de l'anneau (rayon 50) */
 const RING = 2 * Math.PI * 50;
@@ -37,6 +37,12 @@ export class BudgetCategoryComponent {
   protected readonly remaining = computed(() => {
     const line = this.line();
     return line ? round2(line.budget - line.spent) : 0;
+  });
+
+  /** Couleur de l'anneau : neutre, ambre en alerte, rouge en dépassement */
+  protected readonly ringColor = computed(() => {
+    const state = percentClass(this.line()?.percent ?? null);
+    return state === 'over' ? 'var(--danger)' : state === 'warn' ? 'var(--warn)' : null;
   });
 
   protected readonly ring = computed(() => {

@@ -29,7 +29,7 @@
     @for (op of ops; track op.id) {
       <app-op-row [op]="op" [showDate]="true" />
     } @empty {
-      <div class="panel empty-card">Aucune opération ce mois-ci.</div>
+      <div class="panel empty-card">Aucune opération ce mois-ci</div>
     }
   </div>
 } @else {
@@ -46,6 +46,6 @@
       }
     </div>
   } @empty {
-    <div class="panel empty-card page-gap">Aucune opération ce mois-ci.</div>
+    <div class="panel empty-card page-gap">Aucune opération ce mois-ci</div>
   }
 }

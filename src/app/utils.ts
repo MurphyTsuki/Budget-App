@@ -16,7 +16,7 @@ export const FIRST_DAY = '2026-11-01';
 export const FIRST_MONTH = FIRST_DAY.slice(0, 7);
 
 /** Message commun aux formulaires quand la date est refusée */
-export const DATE_ERROR = 'Date invalide (JJ/MM/AAAA, à partir du 01/11/2026).';
+export const DATE_ERROR = 'Date invalide (JJ/MM/AAAA, à partir du 01/11/2026)';
 
 /** Date du jour au format ISO local (AAAA-MM-JJ), sans décalage de fuseau horaire. */
 export function todayISO(): string {
