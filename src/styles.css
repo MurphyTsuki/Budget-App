@@ -5,8 +5,10 @@
 :root {
   --bg: #14110f;
   --bg-2: #1c1815;
-  --panel: rgba(255, 244, 230, 0.045);
-  --panel-strong: rgba(255, 244, 230, 0.08);
+  /* Surfaces opaques (le blanc chaud à 4,5 % et 8 % posé sur --bg) : sur Chrome Android, des fonds
+     semi-transparents se redessinent par morceaux et font apparaître des rectangles plus clairs */
+  --panel: #1f1b19;
+  --panel-strong: #272320;
   --line: rgba(255, 244, 230, 0.1);
   --text: #f1e9df;
   --muted: #a3978a;
@@ -439,10 +441,9 @@ h3 {
   align-items: center;
   padding: 8px;
   border-radius: 24px;
-  background: rgba(28, 24, 21, 0.86);
+  /* Barre pleine, sans flou d'arrière-plan : le flou forçait Chrome Android à tout recalculer derrière elle */
+  background: #1c1815;
   border: 1px solid var(--line);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
   z-index: 20;
 }
 
@@ -680,7 +681,7 @@ h3 {
   border-radius: 16px;
   background: var(--panel);
   border: 1px solid var(--line);
-  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s, background-color 0.2s;
 }
 
 .cat-tile .icon {
@@ -1193,7 +1194,7 @@ h3 {
   background: var(--panel);
   border: 1px solid var(--line);
   cursor: text;
-  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s, background-color 0.2s;
 }
 
 .bline input {
@@ -1702,7 +1703,7 @@ body[data-theme='mvola'] {
 }
 
 body[data-theme] .nav {
-  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  background: var(--bg-2);
 }
 
 body[data-theme] .toast {
@@ -1718,9 +1719,7 @@ body[data-theme] .toast {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  background: rgba(8, 6, 5, 0.65);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background: rgba(8, 6, 5, 0.72);
   overflow-y: auto;
 }
 
