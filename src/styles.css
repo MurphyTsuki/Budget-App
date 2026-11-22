@@ -699,7 +699,8 @@ h3 {
 .cat-tile[aria-checked='true'] {
   border-color: var(--c);
   background: color-mix(in srgb, var(--c) 12%, transparent);
-  box-shadow: 0 0 18px color-mix(in srgb, var(--c) 22%, transparent);
+  /* Lueur tournée vers l'intérieur : une lueur qui déborde est coupée en rectangle par Chrome Android */
+  box-shadow: inset 0 0 18px color-mix(in srgb, var(--c) 35%, transparent);
 }
 
 .cat-tile.create {
@@ -1211,7 +1212,7 @@ h3 {
 .bline:focus-within {
   border-color: var(--c);
   background: color-mix(in srgb, var(--c) 10%, transparent);
-  box-shadow: 0 0 16px color-mix(in srgb, var(--c) 28%, transparent);
+  box-shadow: inset 0 0 16px color-mix(in srgb, var(--c) 35%, transparent);
 }
 
 .bline:focus-within .bline-name {
