@@ -118,6 +118,7 @@ export class EditOpModalComponent {
     const op = this.op();
     if (!op) return;
     const removed = this.store.remove(op.id);
+    this.photos.trashPhotosOf(removed);
     this.ui.closeEdit();
     this.ui.notify('Opération supprimée', false, () => this.store.restore(removed));
   }

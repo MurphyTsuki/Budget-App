@@ -4,6 +4,7 @@
  * Installation (une seule fois) : voir google-apps-script/LISEZMOI.md
  *
  * Les photos vont dans « Volako / <catégorie> / ». L'application ne garde que le lien renvoyé.
+ * Quand une dépense est supprimée, sa photo part dans la corbeille du Drive (récupérable 30 jours).
  */
 
 // Clé secrète : remplace-la par celle affichée dans Volako (Comptes → Photos Google Drive).
@@ -20,6 +21,8 @@ function doPost(e) {
     // Test de connexion depuis l'application
     if (body.ping) return reply({ ok: true });
 
+    if (body.action === 'trash') return trash(body.url);
+
     const root = folder(DriveApp.getRootFolder(), ROOT_FOLDER);
     const dir = folder(root, body.category || 'Hors budget');
     const blob = Utilities.newBlob(Utilities.base64Decode(body.data), body.mimeType || 'image/jpeg', body.name);
@@ -29,6 +32,33 @@ function doPost(e) {
   } catch (err) {
     return reply({ ok: false, error: String(err) });
   }
+}
+
+/** Met la photo à la corbeille, seulement si elle est rangée dans le dossier Volako */
+function trash(url) {
+  const id = /\/d\/([-\w]+)/.exec(String(url) || '');
+  if (!id) return reply({ ok: false, error: 'Lien de photo invalide' });
+  let file;
+  try {
+    file = DriveApp.getFileById(id[1]);
+  } catch (err) {
+    // Déjà supprimée : rien à faire
+    return reply({ ok: true });
+  }
+  if (!insideVolako(file)) return reply({ ok: false, error: 'Ce fichier n’est pas dans le dossier Volako' });
+  file.setTrashed(true);
+  return reply({ ok: true });
+}
+
+/** Vrai si le fichier est dans « Volako » ou l'un de ses sous-dossiers */
+function insideVolako(file) {
+  let parents = file.getParents();
+  while (parents.hasNext()) {
+    const dir = parents.next();
+    if (dir.getName() === ROOT_FOLDER) return true;
+    parents = dir.getParents();
+  }
+  return false;
 }
 
 /** Dossier enfant du nom donné, créé s'il n'existe pas */

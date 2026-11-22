@@ -1,6 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 
 import { BudgetStore } from './budget-store';
+import { Operation } from './models';
 import { pad2 } from './utils';
 
 /** Adresse du script Google (déployé en application Web) et clé secrète partagée avec lui */
@@ -17,7 +18,20 @@ interface PendingPhoto {
   customName: string;
 }
 
+/** Photo de Drive à mettre à la corbeille */
+interface TrashItem {
+  url: string;
+  opId: number;
+  /** Pas avant cet instant : on laisse le temps d'appuyer sur « Annuler » */
+  after: number;
+  /** Photo remplacée : à supprimer même si l'opération existe encore */
+  replaced?: boolean;
+}
+
 const SETTINGS_KEY = 'driveSettings';
+const TRASH_KEY = 'drivePendingTrash';
+/** Un peu plus que la durée du message « Annuler » (5 s) */
+const UNDO_DELAY = 6000;
 /** Plus grand côté de la photo après compression, en pixels */
 const MAX_SIDE = 1280;
 const JPEG_QUALITY = 0.8;
@@ -42,6 +56,23 @@ function loadSettings(): DriveSettings {
   const fresh = { url: '', secret: randomSecret() };
   saveSettings(fresh);
   return fresh;
+}
+
+function loadTrash(): TrashItem[] {
+  try {
+    const raw = JSON.parse(localStorage.getItem(TRASH_KEY) ?? '[]');
+    return Array.isArray(raw) ? raw.filter((t) => typeof t?.url === 'string' && typeof t?.opId === 'number') : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveTrash(items: TrashItem[]): void {
+  try {
+    localStorage.setItem(TRASH_KEY, JSON.stringify(items));
+  } catch {
+    // Stockage plein ou bloqué : la suppression sera perdue si l'appli est fermée avant l'envoi
+  }
 }
 
 function saveSettings(settings: DriveSettings): void {
@@ -124,6 +155,7 @@ export class PhotoService {
   readonly pending = signal<ReadonlySet<number>>(new Set());
   readonly lastError = signal('');
   private sending = false;
+  private trash = loadTrash();
 
   constructor() {
     void this.refreshPending().then(() => this.flush());
@@ -154,11 +186,25 @@ export class PhotoService {
     void this.flush();
   }
 
-  /** Envoie les photos en attente, une par une. S'arrête à la première erreur (réessayé plus tard). */
+  /**
+   * Opérations supprimées : leurs photos iront à la corbeille du Drive après le délai « Annuler ».
+   * Une opération restaurée entre-temps garde sa photo.
+   */
+  trashPhotosOf(removed: Operation[]): void {
+    const after = Date.now() + UNDO_DELAY;
+    const items = removed.filter((op) => op.photo).map((op) => ({ url: op.photo!, opId: op.id, after }));
+    if (!items.length) return;
+    this.trash = [...this.trash, ...items];
+    saveTrash(this.trash);
+    setTimeout(() => void this.flush(), UNDO_DELAY + 200);
+  }
+
+  /** Envoie les photos en attente et les suppressions, une par une. S'arrête à la première erreur (réessayé plus tard). */
   async flush(): Promise<void> {
     if (this.sending || !this.configured() || !navigator.onLine) return;
     this.sending = true;
     try {
+      await this.flushTrash();
       const waiting = await withStore<PendingPhoto[]>('readonly', (s) => s.getAll());
       for (const photo of waiting) {
         const op = this.store.operations().find((o) => o.id === photo.opId);
@@ -175,6 +221,11 @@ export class PhotoService {
           data: await toBase64(photo.blob),
         });
         if (!reply.ok || !reply.url) throw new Error(reply.error ?? 'Envoi refusé');
+        if (op.photo) {
+          // Photo remplacée : l'ancienne part à la corbeille
+          this.trash = [...this.trash, { url: op.photo, opId: op.id, after: 0, replaced: true }];
+          saveTrash(this.trash);
+        }
         this.store.update(op.id, { photo: reply.url });
         await withStore('readwrite', (s) => s.delete(photo.opId));
       }
@@ -184,6 +235,20 @@ export class PhotoService {
     } finally {
       this.sending = false;
       await this.refreshPending();
+    }
+  }
+
+  private async flushTrash(): Promise<void> {
+    const now = Date.now();
+    for (const item of this.trash.filter((t) => t.after <= now)) {
+      const restored = !item.replaced && this.store.operations().some((op) => op.id === item.opId);
+      if (!restored) {
+        const reply = await this.post(this.settings().url, { action: 'trash', url: item.url });
+        // Un ancien script ne connaît pas « trash » : il répond par une erreur de décodage
+        if (!reply.ok) throw new Error(`Suppression refusée (${reply.error ?? 'erreur'}) : mets à jour le script Google`);
+      }
+      this.trash = this.trash.filter((t) => t !== item);
+      saveTrash(this.trash);
     }
   }
 

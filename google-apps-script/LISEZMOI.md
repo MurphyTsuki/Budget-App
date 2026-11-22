@@ -30,6 +30,15 @@ dans `Volako / <catégorie> /`. Il tourne gratuitement chez Google, avec ton com
 
 Colle l'URL dans **Comptes → Photos Google Drive**, puis touche **Tester la connexion**.
 
+## Mettre à jour le script
+
+Quand Volako a besoin d'une nouvelle version du script (par exemple pour mettre à la corbeille
+la photo d'une dépense supprimée) :
+
+1. Ouvre ton projet sur https://script.google.com.
+2. Remplace le contenu de `Code.gs` par la nouvelle version, **en gardant ta clé secrète** à la ligne `SECRET`.
+3. Enregistre, puis suis l'étape ci-dessous.
+
 ## Si tu modifies le script plus tard
 
 **Déployer → Gérer les déploiements → crayon → Version : Nouvelle version → Déployer.**
