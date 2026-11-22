@@ -1,0 +1,18 @@
+<div class="back-head">
+  <a routerLink="/comptes" class="round-btn" aria-label="Retour aux comptes"><app-icon name="left" /></a>
+  <span>
+    <span class="label">Compte</span>
+    <span class="account-title accent">Espèces</span>
+  </span>
+</div>
+
+<div class="cash-center">
+  <span class="cash-mark cash-bubble"><app-icon name="coin" /></span>
+  <span class="label">Sur toi en ce moment</span>
+  <span class="cash-value" [class.negative]="store.balances().cash < 0">{{ store.balances().cash | money }}</span>
+  <span class="label faint">Alimenté par les retraits bancaires<br />et les retraits MVola</span>
+</div>
+
+<button type="button" class="link-btn" (click)="sheet.set('especes')">+ Ajouter des espèces</button>
+
+<app-op-sheet [(kind)]="sheet" />

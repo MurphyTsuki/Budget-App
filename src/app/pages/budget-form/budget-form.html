@@ -1,0 +1,54 @@
+@let v = view();
+
+<div class="back-head">
+  <a class="round-btn" [routerLink]="['/budget', current()]" aria-label="Retour au budget"><app-icon name="left" /></a>
+  <span class="label">{{ title() }}</span>
+</div>
+<h1 class="screen-title">{{ v.budget ? 'Modifier le budget' : 'Ton budget du mois' }}</h1>
+
+@if (v.budget && v.editsLeft === 0) {
+  <div class="panel empty-card">
+    <app-icon name="lock" /><br />
+    Les 3 modifications de ce budget ont été utilisées. Il est verrouillé.
+  </div>
+} @else {
+  <form (submit)="$event.preventDefault(); submit()">
+    <div class="budget-form">
+      @for (c of categories; track c.name) {
+        <label class="bline" [style.--c]="c.color">
+          <span class="bubble"><app-icon [name]="c.icon" /></span>
+          <span class="bline-name">{{ c.name }}</span>
+          <app-amount-field
+            [inputId]="'budget-' + $index"
+            placeholder="—"
+            [value]="values()[c.name]"
+            (valueChange)="setValue(c.name, $event)"
+          />
+        </label>
+      }
+    </div>
+
+    <div class="footbar">
+      <div class="footbar-total">
+        <span class="label">Total du mois</span>
+        <span class="num">{{ total() | money }}</span>
+      </div>
+      @if (error()) {
+        <p class="form-error" role="alert">{{ error() }}</p>
+      }
+      @if (confirming()) {
+        <p class="hint center">
+          @if (v.budget) {
+            Il te restera {{ v.editsLeft - 1 }} modification{{ v.editsLeft - 1 > 1 ? 's' : '' }} après celle-ci.
+          } @else {
+            Une fois validé, tu pourras le modifier 3 fois seulement.
+          }
+        </p>
+      }
+      <button type="submit" class="btn primary big wide">
+        <app-icon name="lock" />
+        {{ confirming() ? 'Confirmer · ' + (total() | money) : v.budget ? 'Enregistrer la modification' : 'Valider le budget' }}
+      </button>
+    </div>
+  </form>
+}

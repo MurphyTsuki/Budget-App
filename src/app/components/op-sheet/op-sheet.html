@@ -1,0 +1,76 @@
+@if (config(); as c) {
+  <div class="modal" (click)="onBackdropClick($event)">
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="op-sheet-title">
+      <div class="label">{{ c.label }}</div>
+      <h2 id="op-sheet-title" class="sheet-title">{{ c.title }}</h2>
+
+      <form class="stack" (ngSubmit)="submit()">
+        @if (c.hint) {
+          <p class="hint">{{ c.hint }}</p>
+        }
+        <div class="field">
+          <label class="label" for="sheet-amount">Montant</label>
+          <app-amount-field inputId="sheet-amount" placeholder="Ex: 50000" [(value)]="amount" />
+        </div>
+
+        @if (c.description; as d) {
+          <div class="field">
+            <label class="label" for="sheet-description">
+              Libellé @if (!d.required) { <span class="faint">(facultatif)</span> }
+            </label>
+            <input
+              type="text"
+              id="sheet-description"
+              name="description"
+              autocomplete="off"
+              [placeholder]="d.required ? d.placeholder : d.fallback"
+              [(ngModel)]="description"
+            />
+          </div>
+        }
+
+        @if (c.category) {
+          <div class="field">
+            <span class="label" id="sheet-category">Catégorie</span>
+            <div class="chips" role="radiogroup" aria-labelledby="sheet-category">
+              @for (cat of categories; track cat.name) {
+                <button
+                  type="button"
+                  class="chip"
+                  role="radio"
+                  [attr.aria-pressed]="category() === cat.name"
+                  [attr.aria-checked]="category() === cat.name"
+                  (click)="category.set(cat.name)"
+                >
+                  {{ cat.name }}
+                </button>
+              }
+            </div>
+          </div>
+        }
+
+        @if (c.fees) {
+          <div class="field">
+            <label class="label" for="sheet-fees">Frais <span class="faint">(0 si aucun)</span></label>
+            <app-amount-field inputId="sheet-fees" placeholder="Ex: 700" [(value)]="fees" />
+          </div>
+          @if (total(); as t) {
+            <div class="row-between label"><span>Frais → Crédit Telma</span><span class="strong">Total débité {{ t }}</span></div>
+          }
+        }
+
+        <div class="field">
+          <label class="label" for="sheet-date">Date <span class="faint">(vide = aujourd'hui)</span></label>
+          <app-date-field inputId="sheet-date" [(value)]="date" />
+        </div>
+
+        @if (error()) {
+          <p class="form-error" role="alert">{{ error() }}</p>
+        }
+
+        <button type="submit" class="btn primary big">Enregistrer</button>
+        <button type="button" class="btn" (click)="close()">Annuler</button>
+      </form>
+    </div>
+  </div>
+}

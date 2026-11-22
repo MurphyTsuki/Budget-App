@@ -1,0 +1,36 @@
+<div class="label">Mes comptes</div>
+<h1 class="screen-title">Comptes</h1>
+
+<div class="stack">
+  <a routerLink="/comptes/banque" class="account-card bred-card">
+    <span class="bank-mark"><app-icon name="gem" /></span>
+    <span class="account-card-main">
+      <span class="label">Banque · BRED</span>
+      <span class="account-card-value" [class.negative]="store.balances().banque < 0">{{ store.balances().banque | money }}</span>
+    </span>
+    <app-icon name="right" class="faint" />
+  </a>
+
+  <a routerLink="/comptes/especes" class="account-card dota-card">
+    <span class="cash-mark"><app-icon name="coin" /></span>
+    <span class="account-card-main">
+      <span class="label">Espèces</span>
+      <span class="account-card-value" [class.negative]="store.balances().cash < 0">{{ store.balances().cash | money }}</span>
+    </span>
+    <app-icon name="right" class="faint" />
+  </a>
+
+  <a routerLink="/comptes/mvola" class="account-card mvola-card">
+    <span class="yas-mark">yas</span>
+    <span class="account-card-main">
+      <span class="label">MVola</span>
+      <span class="account-card-value" [class.negative]="store.balances().mvola < 0">{{ store.balances().mvola | money }}</span>
+    </span>
+    <app-icon name="right" class="faint" />
+  </a>
+
+  <div class="panel total-row">
+    <span class="label">Fortune totale</span>
+    <span class="num total-value" [class.negative]="store.totalBalance() < 0">{{ store.totalBalance() | money }}</span>
+  </div>
+</div>

@@ -1,0 +1,55 @@
+<div class="label">Dépense en espèces</div>
+
+<form class="stack" (ngSubmit)="submit()">
+  <div class="amount-hero">
+    <app-amount-field inputId="amount" placeholder="0" [(value)]="amount" />
+    <label class="label" for="amount">Il te reste {{ store.balances().cash | money }} en espèces</label>
+  </div>
+
+  <span class="label" id="add-category">Catégorie</span>
+  <div class="cat-grid four" role="radiogroup" aria-labelledby="add-category">
+    @for (c of categories; track c.name) {
+      <button
+        type="button"
+        class="cat-tile"
+        role="radio"
+        [style.--c]="c.color"
+        [attr.aria-checked]="category() === c.name"
+        [attr.aria-label]="c.name"
+        (click)="category.set(c.name)"
+      >
+        <app-icon [name]="c.icon" />
+        <span>{{ shortName(c.name) }}</span>
+      </button>
+    }
+  </div>
+
+  <div class="field">
+    <label class="label" for="description">Libellé <span class="faint">(facultatif)</span></label>
+    <input
+      type="text"
+      id="description"
+      name="description"
+      placeholder="Ex: Plein moto"
+      autocomplete="off"
+      [(ngModel)]="description"
+    />
+  </div>
+
+  <div class="chips" role="group" aria-label="Date">
+    <button type="button" class="chip" [attr.aria-pressed]="dateChoice() === 'today'" (click)="dateChoice.set('today')">
+      Aujourd'hui
+    </button>
+    <button type="button" class="chip" [attr.aria-pressed]="dateChoice() === 'yesterday'" (click)="dateChoice.set('yesterday')">
+      Hier
+    </button>
+    <button type="button" class="chip" [attr.aria-pressed]="dateChoice() === 'other'" (click)="dateChoice.set('other')">
+      Autre date
+    </button>
+  </div>
+  @if (dateChoice() === 'other') {
+    <app-date-field inputId="expense-date" [(value)]="otherDate" />
+  }
+
+  <button type="submit" class="btn primary big">{{ submitLabel() }}</button>
+</form>

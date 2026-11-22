@@ -1,0 +1,41 @@
+@if (line(); as l) {
+  <div class="back-head" [style.--c]="l.category.color">
+    <a class="round-btn" [routerLink]="['/budget', current()]" aria-label="Retour au budget"><app-icon name="left" /></a>
+    <span>
+      <span class="label">Budget · {{ monthTitle() }}</span>
+      <span class="account-title">{{ l.category.name }}</span>
+    </span>
+  </div>
+
+  <div class="detail-ring" [style.--c]="(l.percent ?? 0) >= 100 ? 'var(--danger)' : l.category.color">
+    <svg viewBox="0 0 120 120" aria-hidden="true">
+      <circle cx="60" cy="60" r="50" class="ring-track" />
+      <circle cx="60" cy="60" r="50" class="ring-value" [attr.stroke-dasharray]="ring()" />
+      <text x="60" y="68" text-anchor="middle">{{ l.percent === null ? '—' : l.percent + '%' }}</text>
+    </svg>
+    <span class="stack tight">
+      <span class="label">Dépensé</span>
+      <span class="num detail-spent">{{ l.spent | money }} <span class="muted">/ {{ l.budget | money }}</span></span>
+      <span class="label">{{ remaining() < 0 ? 'Dépassement' : 'Reste' }}</span>
+      <span class="num detail-left" [class.negative]="remaining() < 0" [class.accent]="remaining() >= 0">
+        {{ (remaining() < 0 ? -remaining() : remaining()) | money }}
+      </span>
+    </span>
+  </div>
+
+  <div class="section-head">
+    <span class="label">{{ operations().length }} dépense{{ operations().length > 1 ? 's' : '' }}</span>
+  </div>
+  @if (operations().length > 1) {
+    <app-sort-chips [(sort)]="sort" />
+  }
+  <div class="stack tight">
+    @for (op of operations(); track op.id) {
+      <app-op-row [op]="op" [showDate]="true" />
+    } @empty {
+      <p class="hint">Aucune dépense dans cette catégorie ce mois-ci.</p>
+    }
+  </div>
+} @else {
+  <p class="hint">Catégorie inconnue. <a routerLink="/budget" class="link">Retour au budget</a></p>
+}

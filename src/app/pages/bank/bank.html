@@ -1,0 +1,45 @@
+<div class="back-head">
+  <a routerLink="/comptes" class="round-btn" aria-label="Retour aux comptes"><app-icon name="left" /></a>
+  <span class="bank-mark small"><app-icon name="gem" /></span>
+  <span>
+    <span class="label">Compte bancaire</span>
+    <span class="account-title accent">BRED</span>
+  </span>
+</div>
+
+<div class="hero-number" [class.negative]="store.balances().banque < 0">{{ store.balances().banque | money }}</div>
+<div class="label">
+  {{ monthChange() >= 0 ? '▲ +' : '▼ −' }} {{ (monthChange() >= 0 ? monthChange() : -monthChange()) | money }} ce mois-ci
+</div>
+
+<div class="stack page-gap">
+  <app-reference-card account="banque" />
+  <div class="btn-row">
+    <button type="button" class="btn primary" (click)="sheet.set('revenu-banque')"><app-icon name="plus" /> Revenu</button>
+    <button type="button" class="btn" (click)="choosing.set(true)">− Dépense</button>
+  </div>
+</div>
+
+@if (choosing()) {
+  <div class="modal" (click)="onBackdropClick($event)" (keydown.escape)="choosing.set(false)">
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="choice-title">
+      <div class="label">Ajouter une dépense</div>
+      <h2 id="choice-title" class="sheet-title">Quel type ?</h2>
+      <div class="stack tight">
+        @for (c of choices; track c.kind) {
+          <button type="button" class="choice" [style.--c]="c.color" (click)="choose(c.kind)">
+            <span class="bubble"><app-icon [name]="c.icon" /></span>
+            <span class="choice-main">
+              <span class="choice-title">{{ c.title }}</span>
+              <span class="hint">{{ c.text }}</span>
+            </span>
+            <app-icon name="right" class="faint" />
+          </button>
+        }
+      </div>
+      <button type="button" class="btn wide page-gap" (click)="choosing.set(false)">Annuler</button>
+    </div>
+  </div>
+}
+
+<app-op-sheet [(kind)]="sheet" />

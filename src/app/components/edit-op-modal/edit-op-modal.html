@@ -1,0 +1,53 @@
+@if (op(); as o) {
+  <div class="modal" (click)="onBackdropClick($event)">
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="edit-title">
+      <div class="label">{{ title() }}</div>
+      <h2 id="edit-title" class="sheet-title">Modifier</h2>
+
+      <form class="stack" (ngSubmit)="save()">
+        <div class="field">
+          <label class="label" for="edit-description">Libellé</label>
+          <input type="text" id="edit-description" name="description" autocomplete="off" [(ngModel)]="description" />
+        </div>
+
+        <div class="field">
+          <label class="label" for="edit-amount">Montant</label>
+          <app-amount-field inputId="edit-amount" [(value)]="amount" />
+        </div>
+
+        @if (hasFees()) {
+          <div class="field">
+            <label class="label" for="edit-fees">Frais <span class="faint">(0 si aucun)</span></label>
+            <app-amount-field inputId="edit-fees" [(value)]="fees" />
+          </div>
+        }
+
+        <div class="field">
+          <label class="label" for="edit-date">Date</label>
+          <app-date-field inputId="edit-date" [(value)]="date" />
+        </div>
+
+        @if (hasCategory()) {
+          <div class="field">
+            <label class="label" for="edit-category">Catégorie</label>
+            <select id="edit-category" name="category" [(ngModel)]="category">
+              @for (c of categories; track c.name) {
+                <option [value]="c.name">{{ c.name }}</option>
+              }
+            </select>
+          </div>
+        }
+
+        @if (error()) {
+          <p class="form-error" role="alert">{{ error() }}</p>
+        }
+
+        <button type="submit" class="btn primary">Enregistrer les modifications</button>
+        <div class="btn-row">
+          <button type="button" class="btn" (click)="ui.closeEdit()">Annuler</button>
+          <button type="button" class="btn danger" (click)="remove()">Supprimer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

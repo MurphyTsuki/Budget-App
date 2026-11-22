@@ -1,0 +1,16 @@
+@if (reminder(); as r) {
+  <a class="banner" [routerLink]="['/budget', r.month]">
+    <app-icon name="bell" />
+    <span>Le budget de <b>{{ r.name }}</b> n'est pas encore fait.</span>
+    <app-icon name="right" />
+  </a>
+}
+
+<div class="home-month">
+  <div class="label">Budget du mois</div>
+  <h1>{{ monthTitle }}</h1>
+</div>
+
+<a routerLink="/budget" class="home-crystal" aria-label="Voir le budget du mois">
+  <app-crystal [percent]="percent()" />
+</a>

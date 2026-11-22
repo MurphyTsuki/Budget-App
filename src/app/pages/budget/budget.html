@@ -1,0 +1,65 @@
+@let v = view();
+
+<div class="page-head">
+  <span>
+    <span class="label">Budget</span>
+    <h1 class="screen-title">{{ title() }}</h1>
+  </span>
+  @if (v.budget) {
+    <span class="edits-box">
+      <span class="edits" [attr.aria-label]="v.editsLeft + ' modifications restantes'">
+        @for (on of edits(); track $index) {
+          <i [class.used]="!on"></i>
+        }
+      </span>
+      @if (v.editsLeft > 0) {
+        <a class="label accent" [routerLink]="['/budget', current(), 'definir']">
+          <app-icon name="pen" /> Modifier · {{ v.editsLeft }}
+        </a>
+      } @else {
+        <span class="label faint"><app-icon name="lock" /> Verrouillé</span>
+      }
+    </span>
+  }
+</div>
+
+<div class="month-nav">
+  @if (previous(); as p) {
+    <a class="round-btn" [routerLink]="['/budget', p]" aria-label="Mois précédent"><app-icon name="left" /></a>
+  } @else {
+    <button type="button" class="round-btn" disabled aria-label="Mois précédent"><app-icon name="left" /></button>
+  }
+  <span class="label strong">{{ title() }}</span>
+  <a class="round-btn" [routerLink]="['/budget', next()]" aria-label="Mois suivant"><app-icon name="right" /></a>
+</div>
+
+@if (!v.budget) {
+  <div class="alert">
+    <span class="alert-ring"><app-icon name="alert" /></span>
+    <h2>Budget du mois<br />non défini</h2>
+    <p>Tant que le budget n'est pas fait,<br />tes dépenses ne sont suivies nulle part.</p>
+    <a class="btn alert-btn" [routerLink]="['/budget', current(), 'definir']">Définir le budget</a>
+  </div>
+  <p class="label faint center-note">12 catégories · 3 modifications<br />possibles une fois validé</p>
+} @else {
+  <div class="panel consumed">
+    <span class="label">Consommé</span>
+    <span class="num">{{ v.spent | money }} <span class="muted">/ {{ v.total | money }}</span></span>
+  </div>
+
+  <div class="budget-lines">
+    @for (line of v.lines; track line.category.name) {
+      <a class="bline-row" [routerLink]="['/budget', current(), 'categorie', line.category.name]" [style.--c]="line.category.color">
+        <span class="bubble"><app-icon [name]="line.category.icon" /></span>
+        <span class="bline-main">
+          <span class="bline-name">{{ line.category.name }}</span>
+          <span class="bar" [class.over]="(line.percent ?? 0) >= 100">
+            <span [style.width.%]="line.percent === null ? 0 : line.percent > 100 ? 100 : line.percent"></span>
+          </span>
+        </span>
+        <span class="bline-pc num {{ percentClass(line.percent) }}">{{ line.percent === null ? '—' : line.percent + '%' }}</span>
+        <app-icon name="right" class="faint" />
+      </a>
+    }
+  </div>
+}

@@ -1,0 +1,51 @@
+<div class="page-head">
+  <span>
+    <span class="label">Journal</span>
+    <h1 class="screen-title">Dépenses</h1>
+  </span>
+  <span class="head-total">
+    <span class="label">Dépensé</span>
+    <span class="num">− {{ spent() | money }}</span>
+  </span>
+</div>
+
+<div class="month-nav">
+  <button type="button" class="round-btn" (click)="shift(-1)" [disabled]="isFirstMonth()" aria-label="Mois précédent"><app-icon name="left" /></button>
+  <span class="label strong">{{ title() }}</span>
+  <button type="button" class="round-btn" (click)="shift(1)" [disabled]="isCurrentMonth()" aria-label="Mois suivant">
+    <app-icon name="right" />
+  </button>
+</div>
+
+<div class="chips" role="group" aria-label="Compte">
+  @for (f of filters; track f.id) {
+    <button type="button" class="chip" [attr.aria-pressed]="filter() === f.id" (click)="filter.set(f.id)">{{ f.label }}</button>
+  }
+</div>
+<app-sort-chips [(sort)]="sort" />
+
+@if (flat(); as ops) {
+  <div class="stack tight page-gap">
+    @for (op of ops; track op.id) {
+      <app-op-row [op]="op" [showDate]="true" />
+    } @empty {
+      <div class="panel empty-card">Aucune opération ce mois-ci.</div>
+    }
+  </div>
+} @else {
+  @for (day of days(); track day.date) {
+    <div class="section-head">
+      <span class="label">{{ day.label }}</span>
+      @if (day.spent > 0) {
+        <span class="label num">− {{ day.spent | money }}</span>
+      }
+    </div>
+    <div class="stack tight">
+      @for (op of day.ops; track op.id) {
+        <app-op-row [op]="op" />
+      }
+    </div>
+  } @empty {
+    <div class="panel empty-card page-gap">Aucune opération ce mois-ci.</div>
+  }
+}

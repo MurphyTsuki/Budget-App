@@ -1,0 +1,38 @@
+<div class="back-head">
+  <a routerLink="/comptes" class="round-btn" aria-label="Retour aux comptes"><app-icon name="left" /></a>
+  <span class="yas-mark small">yas</span>
+  <span>
+    <span class="label">Mobile money</span>
+    <span class="account-title accent">MVola</span>
+  </span>
+</div>
+
+<div class="hero-number" [class.negative]="store.balances().mvola < 0">{{ store.balances().mvola | money }}</div>
+<div class="label">Frais payés ce mois · <span class="accent">{{ fees() | money }}</span></div>
+
+<div class="mv-actions">
+  <button type="button" class="mv-act dep" (click)="sheet.set('depot-mvola')">
+    <span class="mv-ic"><app-icon name="down" /></span>Dépôt
+  </button>
+  <button type="button" class="mv-act ret" (click)="sheet.set('retrait-mvola')">
+    <span class="mv-ic"><app-icon name="up" /></span>Retrait
+  </button>
+  <button type="button" class="mv-act tra" (click)="sheet.set('transfert-mvola')">
+    <span class="mv-ic"><app-icon name="send" /></span>Transfert
+  </button>
+</div>
+
+<div class="page-gap">
+  <app-reference-card account="mvola" />
+</div>
+
+<div class="section-head"><span class="label">Dernières opérations</span></div>
+<div class="stack tight">
+  @for (op of recent(); track op.id) {
+    <app-op-row [op]="op" [showDate]="true" />
+  } @empty {
+    <p class="hint">Aucune opération MVola pour l'instant.</p>
+  }
+</div>
+
+<app-op-sheet [(kind)]="sheet" />

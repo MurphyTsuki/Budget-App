@@ -1,0 +1,11 @@
+<input
+  type="text"
+  [id]="inputId()"
+  [attr.inputmode]="allowNegative() ? 'text' : 'decimal'"
+  maxlength="15"
+  autocomplete="off"
+  [placeholder]="placeholder()"
+  [value]="value()"
+  (input)="onInput($event)"
+  (blur)="onBlur()"
+/>

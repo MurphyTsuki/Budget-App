@@ -1,0 +1,33 @@
+@if (editing()) {
+  <form class="panel stack" (ngSubmit)="save()">
+    <span class="label">Solde à une date</span>
+    <p class="hint">Indique le solde affiché par ta banque ou par MVola à une date précise. Les opérations plus anciennes ne comptent plus.</p>
+    <div class="field">
+      <label class="label" [for]="account() + '-ref-date'">Date</label>
+      <app-date-field [inputId]="account() + '-ref-date'" [(value)]="date" />
+    </div>
+    <div class="field">
+      <label class="label" [for]="account() + '-ref-amount'">Solde à cette date</label>
+      <app-amount-field [inputId]="account() + '-ref-amount'" placeholder="Ex: 250000" [allowNegative]="true" [(value)]="amount" />
+    </div>
+    <button type="submit" class="btn primary">Enregistrer le solde</button>
+    <div class="btn-row">
+      <button type="button" class="btn" (click)="editing.set(false)">Annuler</button>
+      @if (reference()) {
+        <button type="button" class="btn danger" (click)="clear()">Retirer</button>
+      }
+    </div>
+  </form>
+} @else {
+  <button type="button" class="panel ref-card" (click)="open()">
+    <span>
+      <span class="label">Solde de référence</span>
+      @if (reference(); as ref) {
+        <span class="ref-value">{{ ref.amount | money }} <span class="muted">au {{ ref.date | frDate }}</span></span>
+      } @else {
+        <span class="ref-value muted">Aucun · toucher pour en définir un</span>
+      }
+    </span>
+    <app-icon name="pen" class="muted" />
+  </button>
+}
