@@ -41,6 +41,8 @@ const ICONS: Record<string, string[]> = {
   send: ['M4 12h15M13 6l6 6-6 6'],
   down: ['M12 4v15M6 13l6 6 6-6'],
   up: ['M12 20V5M6 11l6-6 6 6'],
+  camera: ['M4 8h3l2-3h6l2 3h3v11H4z', 'M12 9.5a3.5 3.5 0 1 0 0 7a3.5 3.5 0 1 0 0-7'],
+  clock: ['M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18', 'M12 7v5l3 2'],
 };
 
 /** Icône au trait (couleur = couleur du texte). Utilisation : <app-icon name="basket" /> */

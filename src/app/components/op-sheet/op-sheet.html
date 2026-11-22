@@ -59,6 +59,10 @@
           }
         }
 
+        @if (c.photo) {
+          <app-photo-field inputId="sheet-photo" [(file)]="photo" [(name)]="photoName" />
+        }
+
         <div class="field">
           <label class="label" for="sheet-date">Date <span class="faint">(vide = aujourd'hui)</span></label>
           <app-date-field inputId="sheet-date" [(value)]="date" />

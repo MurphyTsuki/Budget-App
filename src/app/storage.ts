@@ -78,6 +78,7 @@ function normalizeOperation(raw: unknown): Operation | null {
   const category = kind === 'depense' && isCategory(raw['category']) ? raw['category'] : null;
   if (kind === 'depense' && category === null) return null;
 
+  const photo = raw['photo'];
   return {
     id,
     date,
@@ -88,6 +89,7 @@ function normalizeOperation(raw: unknown): Operation | null {
     category,
     channel: isOneOf(CHANNELS, raw['channel']) ? raw['channel'] : null,
     parentId: typeof raw['parentId'] === 'number' ? raw['parentId'] : null,
+    ...(typeof photo === 'string' && photo.startsWith('https://') ? { photo } : {}),
   };
 }
 

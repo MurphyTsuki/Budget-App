@@ -1,6 +1,7 @@
 import { Component, computed, inject, input } from '@angular/core';
 
 import { BudgetStore } from '../../budget-store';
+import { PhotoService } from '../../photos';
 import { ACCOUNTS, Channel, Operation, findCategory } from '../../models';
 import { MoneyPipe } from '../../pipes';
 import { UiService } from '../../ui.service';
@@ -31,7 +32,14 @@ const MOVE_LABELS = {
   template: `
     <span class="bubble" [class.tinted]="look().color" [style.--c]="look().color"><app-icon [name]="look().icon" /></span>
     <span class="op-info">
-      <span class="op-title">{{ op().description }}</span>
+      <span class="op-title">
+        {{ op().description }}
+        @if (op().photo) {
+          <app-icon name="camera" class="op-flag" title="Photo dans Drive" />
+        } @else if (pending()) {
+          <app-icon name="clock" class="op-flag" title="Photo en attente d’envoi" />
+        }
+      </span>
       <span class="op-sub">{{ look().sub }}@if (fees(); as f) { · frais {{ f }}}@if (showDate()) { · {{ date() }}}</span>
     </span>
     <span class="op-amount num" [class.in]="op().kind === 'revenu'" [class.muted]="look().move">
@@ -56,6 +64,10 @@ export class OpRowComponent {
 
   private readonly ui = inject(UiService);
   private readonly store = inject(BudgetStore);
+  private readonly photos = inject(PhotoService);
+
+  /** Photo encore sur le téléphone, en attente d'envoi dans Drive */
+  protected readonly pending = computed(() => this.photos.pending().has(this.op().id));
 
   /** Frais MVola liés à ce retrait ou à ce transfert */
   protected readonly fees = computed(() => {

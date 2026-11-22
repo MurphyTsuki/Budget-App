@@ -4,19 +4,20 @@ import { RouterLink } from '@angular/router';
 import { BudgetStore } from '../../budget-store';
 import { IconComponent } from '../../components/icon/icon';
 import { ParsedCsv, exportCsv, parseCsv } from '../../csv';
+import { PhotoService } from '../../photos';
 import { MoneyPipe } from '../../pipes';
 import { UiService } from '../../ui.service';
 import { monthLabel, todayISO } from '../../utils';
 
 /**
  * Page « Comptes » : la banque, les espèces et MVola (chaque carte mène au compte),
- * puis l'export et l'import des données en CSV.
+ * puis les photos Google Drive et l'export / import des données en CSV.
  */
 @Component({
   selector: 'app-accounts',
   templateUrl: './accounts.html',
   imports: [RouterLink, IconComponent, MoneyPipe],
-  host: { '(document:keydown.escape)': 'closeImport()' },
+  host: { '(document:keydown.escape)': 'closeImport(); driveOpen.set(false)' },
 })
 export class AccountsComponent {
   protected readonly store = inject(BudgetStore);
@@ -28,6 +29,46 @@ export class AccountsComponent {
   protected readonly confirmingReplace = signal(false);
 
   protected readonly monthLabel = monthLabel;
+
+  // Réglages des photos Google Drive
+  protected readonly photos = inject(PhotoService);
+  protected readonly driveOpen = signal(false);
+  protected readonly driveUrl = signal('');
+  protected readonly driveMessage = signal<{ text: string; error: boolean } | null>(null);
+  protected readonly testing = signal(false);
+
+  protected openDrive(): void {
+    this.driveUrl.set(this.photos.settings().url);
+    this.driveMessage.set(null);
+    this.driveOpen.set(true);
+  }
+
+  protected async copySecret(): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(this.photos.settings().secret);
+      this.ui.notify('Clé copiée');
+    } catch {
+      this.ui.notify('Copie impossible : sélectionne la clé à la main', true);
+    }
+  }
+
+  /** Teste l'adresse saisie, puis l'enregistre si le script répond */
+  protected async saveDrive(): Promise<void> {
+    const url = this.driveUrl().trim();
+    if (!/^https:\/\/script\.google\.com\/.+\/exec$/.test(url)) {
+      this.driveMessage.set({ text: 'L’adresse doit commencer par https://script.google.com et finir par /exec', error: true });
+      return;
+    }
+    this.testing.set(true);
+    const error = await this.photos.test(url);
+    this.testing.set(false);
+    if (error) {
+      this.driveMessage.set({ text: error, error: true });
+      return;
+    }
+    this.photos.setUrl(url);
+    this.driveMessage.set({ text: 'Connexion réussie : les photos iront dans ton Drive', error: false });
+  }
 
   protected exportData(): void {
     const csv = exportCsv({

@@ -36,6 +36,8 @@
     />
   </div>
 
+  <app-photo-field inputId="add-photo" [(file)]="photo" [(name)]="photoName" />
+
   <div class="chips" role="group" aria-label="Date">
     <button type="button" class="chip" [attr.aria-pressed]="dateChoice() === 'today'" (click)="dateChoice.set('today')">
       Aujourd'hui

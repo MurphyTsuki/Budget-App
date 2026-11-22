@@ -29,6 +29,8 @@ export interface Operation {
   channel: Channel | null;
   /** Frais MVola : identifiant du retrait ou du transfert qui les a causés */
   parentId: number | null;
+  /** Lien vers la photo dans Google Drive (absent tant qu'elle n'est pas envoyée) */
+  photo?: string;
 }
 
 /** Solde connu d'un compte à une date donnée. */

@@ -3,10 +3,12 @@ import { FormsModule } from '@angular/forms';
 
 import { BudgetStore, NewOperation } from '../../budget-store';
 import { CATEGORIES, TRANSFER_CATEGORY } from '../../models';
+import { PhotoService } from '../../photos';
 import { UiService } from '../../ui.service';
 import { DATE_ERROR, formatMoney, parseAmount, parseFrDate, parseNumber, todayISO } from '../../utils';
 import { AmountFieldComponent } from '../amount-field/amount-field';
 import { DateFieldComponent } from '../date-field/date-field';
+import { PhotoFieldComponent } from '../photo-field/photo-field';
 
 /** Les formulaires d'ajout des pages Banque, Espèces et MVola. */
 export type SheetKind =
@@ -27,6 +29,8 @@ interface SheetConfig {
   description: { required: true; placeholder: string } | { required: false; fallback: string } | null;
   category?: boolean;
   fees?: boolean;
+  /** Les dépenses peuvent avoir une photo (envoyée dans Drive) */
+  photo?: boolean;
   done: string;
   build: (amount: number, description: string, date: string, category: string) => NewOperation;
 }
@@ -49,6 +53,7 @@ const SHEETS: Record<SheetKind, SheetConfig> = {
     title: 'Achat en ligne',
     description: { required: true, placeholder: 'Ex: Abonnement fibre' },
     category: true,
+    photo: true,
     done: 'Achat enregistré',
     build: expense('banque', 'achat-en-ligne'),
   },
@@ -65,6 +70,7 @@ const SHEETS: Record<SheetKind, SheetConfig> = {
     title: 'Virement bancaire',
     hint: 'Compté automatiquement dans la catégorie Imprévu.',
     description: { required: true, placeholder: 'Ex: Virement à Hery' },
+    photo: true,
     done: 'Virement enregistré dans Imprévu',
     build: (amount, description, date) => expense('banque', 'virement')(amount, description, date, TRANSFER_CATEGORY),
   },
@@ -99,6 +105,7 @@ const SHEETS: Record<SheetKind, SheetConfig> = {
     hint: 'Les frais vont automatiquement dans Crédit Telma.',
     description: { required: true, placeholder: 'Ex: Loyer' },
     category: true,
+    photo: true,
     fees: true,
     done: 'Transfert enregistré',
     build: expense('mvola', 'transfert'),
@@ -113,7 +120,7 @@ const SHEETS: Record<SheetKind, SheetConfig> = {
 @Component({
   selector: 'app-op-sheet',
   templateUrl: './op-sheet.html',
-  imports: [FormsModule, AmountFieldComponent, DateFieldComponent],
+  imports: [FormsModule, AmountFieldComponent, DateFieldComponent, PhotoFieldComponent],
   host: { '(document:keydown.escape)': 'close()' },
 })
 export class OpSheetComponent {
@@ -134,6 +141,9 @@ export class OpSheetComponent {
   protected readonly fees = signal('');
   protected readonly date = signal('');
   protected readonly error = signal('');
+  protected readonly photo = signal<Blob | null>(null);
+  protected readonly photoName = signal('');
+  private readonly photos = inject(PhotoService);
 
   /** Total débité (montant + frais) */
   protected readonly total = computed(() => {
@@ -147,9 +157,10 @@ export class OpSheetComponent {
     effect(() => {
       if (!this.kind()) return;
       untracked(() => {
-        for (const field of [this.amount, this.description, this.category, this.fees, this.date, this.error]) {
+        for (const field of [this.amount, this.description, this.category, this.fees, this.date, this.error, this.photoName]) {
           field.set('');
         }
+        this.photo.set(null);
       });
     });
   }
@@ -181,7 +192,9 @@ export class OpSheetComponent {
     if (fees === null) return this.error.set('Frais invalides');
     if (!date) return this.error.set(DATE_ERROR);
 
-    this.store.add(config.build(amount, description, date, this.category()), fees);
+    const id = this.store.add(config.build(amount, description, date, this.category()), fees);
+    const photo = config.photo ? this.photo() : null;
+    if (photo) void this.photos.attach(id, photo, this.photoName());
     this.ui.notify(config.done);
     this.close();
   }

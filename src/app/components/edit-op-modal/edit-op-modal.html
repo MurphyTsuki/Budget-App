@@ -38,6 +38,20 @@
           </div>
         }
 
+        @if (o.kind === 'depense' && o.channel !== 'frais') {
+          @if (o.photo) {
+            <a class="btn" [href]="o.photo" target="_blank" rel="noopener">Voir la photo dans Drive</a>
+          } @else if (photos.pending().has(o.id)) {
+            <p class="hint">Photo en attente d’envoi dans Drive</p>
+          }
+          <app-photo-field
+            inputId="edit-photo"
+            [label]="o.photo || photos.pending().has(o.id) ? 'Remplacer la photo' : 'Ajouter une photo'"
+            [(file)]="photo"
+            [(name)]="photoName"
+          />
+        }
+
         @if (error()) {
           <p class="form-error" role="alert">{{ error() }}</p>
         }

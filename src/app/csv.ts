@@ -125,7 +125,7 @@ export function exportCsv(data: VolakoData): string {
       amountCell(op.amount),
       fees.has(op.id) ? amountCell(fees.get(op.id)!) : '',
       planned === undefined ? '' : amountCell(planned),
-      '',
+      op.photo ?? '',
     ]);
   }
 
@@ -320,6 +320,8 @@ export function parseCsv(text: string): ParsedCsv {
       channel: opType.channel,
       parentId: null,
     };
+    const photo = get('Photo');
+    if (photo.startsWith('https://')) op.photo = photo;
     result.operations.push(op);
     result.operationCount++;
     months.push(date.slice(0, 7));

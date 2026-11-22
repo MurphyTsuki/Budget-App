@@ -179,14 +179,16 @@ export class BudgetStore {
 
   /* ---------- Opérations ---------- */
 
-  /** Ajoute une opération, et ses frais MVola s'il y en a (rangés dans Crédit Telma). */
-  add(data: NewOperation, fees = 0): void {
+  /** Ajoute une opération, et ses frais MVola s'il y en a (rangés dans Crédit Telma). Renvoie son identifiant. */
+  add(data: NewOperation, fees = 0): number {
+    const id = generateId(this.operations());
     this.operations.update((list) => {
-      const op: Operation = { ...data, id: generateId(list), parentId: null };
+      const op: Operation = { ...data, id, parentId: null };
       const next = [...list, op];
       if (fees > 0) next.push(this.feeOperation(op, fees, generateId(next)));
       return next;
     });
+    return id;
   }
 
   private feeOperation(parent: Operation, amount: number, id: number): Operation {

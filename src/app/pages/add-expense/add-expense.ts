@@ -5,7 +5,9 @@ import { BudgetStore } from '../../budget-store';
 import { AmountFieldComponent } from '../../components/amount-field/amount-field';
 import { DateFieldComponent } from '../../components/date-field/date-field';
 import { IconComponent } from '../../components/icon/icon';
+import { PhotoFieldComponent } from '../../components/photo-field/photo-field';
 import { CATEGORIES } from '../../models';
+import { PhotoService } from '../../photos';
 import { MoneyPipe } from '../../pipes';
 import { UiService } from '../../ui.service';
 import { DATE_ERROR, addDaysISO, formatMoney, parseAmount, parseFrDate, todayISO } from '../../utils';
@@ -16,11 +18,12 @@ type DateChoice = 'today' | 'yesterday' | 'other';
 @Component({
   selector: 'app-add-expense',
   templateUrl: './add-expense.html',
-  imports: [FormsModule, AmountFieldComponent, DateFieldComponent, IconComponent, MoneyPipe],
+  imports: [FormsModule, AmountFieldComponent, DateFieldComponent, IconComponent, PhotoFieldComponent, MoneyPipe],
 })
 export class AddExpenseComponent {
   protected readonly store = inject(BudgetStore);
   private readonly ui = inject(UiService);
+  private readonly photos = inject(PhotoService);
 
   protected readonly categories = CATEGORIES;
 
@@ -29,6 +32,8 @@ export class AddExpenseComponent {
   protected readonly category = signal('');
   protected readonly dateChoice = signal<DateChoice>('today');
   protected readonly otherDate = signal('');
+  protected readonly photo = signal<Blob | null>(null);
+  protected readonly photoName = signal('');
 
   protected readonly submitLabel = computed(() => {
     const amount = parseAmount(this.amount());
@@ -57,13 +62,17 @@ export class AddExpenseComponent {
 
     // Sans libellé, la dépense prend le nom de sa catégorie
     const description = this.description().trim() || category;
-    this.store.add({ kind: 'depense', account: 'cash', amount, description, date, category, channel: 'especes' });
+    const id = this.store.add({ kind: 'depense', account: 'cash', amount, description, date, category, channel: 'especes' });
+    const photo = this.photo();
+    if (photo) void this.photos.attach(id, photo, this.photoName());
 
     this.description.set('');
     this.amount.set('');
     this.category.set('');
     this.dateChoice.set('today');
     this.otherDate.set('');
+    this.photo.set(null);
+    this.photoName.set('');
     this.ui.notify('Dépense en espèces enregistrée');
   }
 }

@@ -3,10 +3,12 @@ import { FormsModule } from '@angular/forms';
 
 import { BudgetStore } from '../../budget-store';
 import { CATEGORIES, Operation } from '../../models';
+import { PhotoService } from '../../photos';
 import { UiService } from '../../ui.service';
 import { DATE_ERROR, amountToInput, isoToFr, parseAmount, parseFrDate, parseNumber } from '../../utils';
 import { AmountFieldComponent } from '../amount-field/amount-field';
 import { DateFieldComponent } from '../date-field/date-field';
+import { PhotoFieldComponent } from '../photo-field/photo-field';
 
 const TITLES: Record<Operation['kind'], string> = {
   depense: 'Dépense',
@@ -20,7 +22,7 @@ const TITLES: Record<Operation['kind'], string> = {
 @Component({
   selector: 'app-edit-op-modal',
   templateUrl: './edit-op-modal.html',
-  imports: [FormsModule, AmountFieldComponent, DateFieldComponent],
+  imports: [FormsModule, AmountFieldComponent, DateFieldComponent, PhotoFieldComponent],
   host: {
     '(document:keydown.escape)': 'onEscape()',
   },
@@ -28,6 +30,7 @@ const TITLES: Record<Operation['kind'], string> = {
 export class EditOpModalComponent {
   protected readonly ui = inject(UiService);
   private readonly store = inject(BudgetStore);
+  protected readonly photos = inject(PhotoService);
 
   protected readonly categories = CATEGORIES;
 
@@ -54,6 +57,8 @@ export class EditOpModalComponent {
   protected readonly date = signal('');
   protected readonly category = signal('');
   protected readonly error = signal('');
+  protected readonly photo = signal<Blob | null>(null);
+  protected readonly photoName = signal('');
 
   constructor() {
     // À l'ouverture : remplit les champs avec l'opération choisie
@@ -73,6 +78,8 @@ export class EditOpModalComponent {
         this.date.set(isoToFr(op.date));
         this.category.set(op.category ?? '');
         this.error.set('');
+        this.photo.set(null);
+        this.photoName.set('');
       });
     });
   }
@@ -101,6 +108,8 @@ export class EditOpModalComponent {
 
     const changes = { description, amount, date, ...(this.hasCategory() ? { category: this.category() } : {}) };
     this.store.update(op.id, changes, this.hasFees() ? fees : undefined);
+    const photo = this.photo();
+    if (photo) void this.photos.attach(op.id, photo, this.photoName());
     this.ui.closeEdit();
     this.ui.notify('Opération modifiée');
   }

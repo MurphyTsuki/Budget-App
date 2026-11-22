@@ -1481,6 +1481,48 @@ h3 {
   height: 16px;
 }
 
+/* Photo d'une dépense : bouton, aperçu et petit repère sur la ligne */
+.photo-btn {
+  position: relative;
+  width: 100%;
+  cursor: pointer;
+}
+
+.photo-btn input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.photo-btn:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.photo-picked {
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.photo-picked img {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+}
+
+.op-flag {
+  width: 14px;
+  height: 14px;
+  margin-left: 4px;
+  color: var(--muted);
+  vertical-align: -2px;
+}
+
 /* Importer : le champ fichier couvre toute la ligne, invisible */
 .file-choice {
   position: relative;

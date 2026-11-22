@@ -45,6 +45,21 @@
       <span class="hint">Budgets, soldes de référence et toutes les opérations, lisible dans Excel</span>
     </span>
   </button>
+  <button type="button" class="choice" (click)="openDrive()">
+    <span class="bubble"><app-icon name="camera" /></span>
+    <span class="choice-main">
+      <span class="choice-title">Photos Google Drive</span>
+      <span class="hint">
+        @if (!photos.configured()) {
+          Non relié · touche pour relier ton Drive
+        } @else if (photos.pending().size) {
+          {{ photos.pending().size }} photo{{ photos.pending().size > 1 ? 's' : '' }} en attente d’envoi
+        } @else {
+          Relié · les photos vont dans Volako / catégorie
+        }
+      </span>
+    </span>
+  </button>
   <label class="choice file-choice">
     <span class="bubble"><app-icon name="up" /></span>
     <span class="choice-main">
@@ -54,6 +69,58 @@
     <input type="file" accept=".csv,text/csv" (change)="readFile($event)" />
   </label>
 </div>
+
+@if (driveOpen()) {
+  <div class="modal" (click)="$event.target === $event.currentTarget && driveOpen.set(false)">
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="drive-title">
+      <div class="label">Photos des dépenses</div>
+      <h2 id="drive-title" class="sheet-title">Google Drive</h2>
+
+      <div class="stack">
+        <p class="hint">
+          Installe une fois le script Google fourni avec Volako (dossier google-apps-script du projet, fichier LISEZMOI).
+          Il range chaque photo dans ton Drive, dans Volako / catégorie, et l’appli ne garde que le lien.
+        </p>
+
+        <div class="field">
+          <span class="label">1. Clé secrète à coller dans le script</span>
+          <div class="inline-form">
+            <input type="text" readonly [value]="photos.settings().secret" aria-label="Clé secrète" (focus)="$any($event.target).select()" />
+            <button type="button" class="btn" (click)="copySecret()">Copier</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label" for="drive-url">2. Adresse du script (finit par /exec)</label>
+          <input
+            type="url"
+            id="drive-url"
+            name="driveUrl"
+            autocomplete="off"
+            placeholder="https://script.google.com/macros/s/…/exec"
+            [value]="driveUrl()"
+            (input)="driveUrl.set($any($event.target).value)"
+          />
+        </div>
+
+        @if (driveMessage(); as m) {
+          <p [class.form-error]="m.error" [class.hint]="!m.error" role="status">{{ m.text }}</p>
+        }
+        @if (photos.lastError() && photos.pending().size) {
+          <p class="form-error">Dernier envoi échoué : {{ photos.lastError() }}</p>
+        }
+
+        <button type="button" class="btn primary" [disabled]="testing()" (click)="saveDrive()">
+          {{ testing() ? 'Test en cours…' : 'Tester et enregistrer' }}
+        </button>
+        @if (photos.pending().size && photos.configured()) {
+          <button type="button" class="btn" (click)="photos.flush()">Réessayer l’envoi des photos en attente</button>
+        }
+        <button type="button" class="btn" (click)="driveOpen.set(false)">Fermer</button>
+      </div>
+    </div>
+  </div>
+}
 
 @if (imported(); as file) {
   <div class="modal" (click)="onBackdropClick($event)">
