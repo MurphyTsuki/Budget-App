@@ -12,6 +12,15 @@
     Les 3 modifications de ce budget ont été utilisées. Il est verrouillé.
   </div>
 } @else {
+  @if (!v.budget && previous(); as p) {
+    <button type="button" class="choice copy-previous" (click)="copyPrevious()">
+      <span class="bubble"><app-icon name="calendar" /></span>
+      <span class="choice-main">
+        <span class="choice-title">Copier le budget de {{ p.label }}</span>
+        <span class="hint">Remplit les montants ; tu pourras les changer avant de valider</span>
+      </span>
+    </button>
+  }
   <form (submit)="$event.preventDefault(); submit()">
     <div class="budget-form">
       @for (c of categories(); track c.name) {

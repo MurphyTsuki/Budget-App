@@ -1177,6 +1177,11 @@ h3 {
   color: var(--danger);
 }
 
+/* Définir le budget : copie du mois précédent */
+.copy-previous {
+  margin-bottom: 12px;
+}
+
 /* Définir le budget : une catégorie par ligne */
 .budget-form {
   display: grid;

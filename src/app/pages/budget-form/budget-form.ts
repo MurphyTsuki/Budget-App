@@ -6,7 +6,7 @@ import { AmountFieldComponent } from '../../components/amount-field/amount-field
 import { IconComponent } from '../../components/icon/icon';
 import { MoneyPipe } from '../../pipes';
 import { UiService } from '../../ui.service';
-import { amountToInput, monthLabel, parseNumber, round2 } from '../../utils';
+import { amountToInput, monthLabel, parseNumber, round2, shiftMonth } from '../../utils';
 import { routeMonth } from '../budget/budget';
 
 /**
@@ -29,6 +29,13 @@ export class BudgetFormComponent {
   protected readonly categories = this.store.categories;
   protected readonly current = computed(() => routeMonth(this.month()));
   protected readonly title = computed(() => monthLabel(this.current()));
+
+  /** Budget du mois précédent, proposé à la copie quand le budget du mois n'existe pas encore */
+  protected readonly previous = computed(() => {
+    const month = shiftMonth(this.current(), -1);
+    const budget = this.store.budgets()[month];
+    return budget ? { label: monthLabel(month).toLowerCase(), amounts: budget.amounts } : null;
+  });
   protected readonly view = computed(() => this.store.budgetView(this.current()));
 
   /** Montant saisi pour chaque catégorie */
@@ -55,6 +62,21 @@ export class BudgetFormComponent {
         this.confirming.set(false);
       });
     });
+  }
+
+  /** Remplit les montants avec ceux du mois précédent ; rien n'est enregistré avant la confirmation */
+  protected copyPrevious(): void {
+    const previous = this.previous();
+    if (!previous) return;
+    const values: Record<string, string> = {};
+    for (const c of this.store.categories()) {
+      const amount = previous.amounts[c.name];
+      values[c.name] = amount ? amountToInput(amount) : '';
+    }
+    this.values.set(values);
+    this.confirming.set(false);
+    this.error.set('');
+    this.ui.notify(`Montants de ${previous.label} copiés : vérifie-les puis valide`);
   }
 
   protected setValue(category: string, text: string): void {
