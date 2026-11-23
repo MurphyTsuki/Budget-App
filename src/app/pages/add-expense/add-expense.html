@@ -28,6 +28,10 @@
     </button>
   </div>
 
+  @if (category() === fuelCategory) {
+    <app-fuel-fields inputId="add-fuel" [amount]="amount()" [(km)]="km" [(left)]="left" />
+  }
+
   <div class="field">
     <label class="label" for="description">Libellé <span class="faint">(facultatif)</span></label>
     <input

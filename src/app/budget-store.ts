@@ -7,9 +7,12 @@ import {
   Category,
   Deletions,
   FEES_CATEGORY,
+  FUEL_CATEGORY,
+  FuelPrice,
   MAX_BUDGET_EDITS,
   MOVES,
   MonthBudget,
+  MotoReading,
   Operation,
   Reference,
   ReferenceKey,
@@ -17,22 +20,29 @@ import {
   setCustomCategories,
 } from './models';
 import type { VolakoData } from './csv';
+import { maxKmBefore, motoEvents } from './moto';
 import {
   clearOldData,
   loadBudgets,
   loadCategories,
   loadDeletions,
+  loadFuelPrice,
   loadOperations,
+  loadReadingDeletions,
+  loadReadings,
   loadReferenceTimes,
   loadReferences,
   saveBudgets,
   saveCategories,
   saveDeletions,
+  saveFuelPrice,
   saveOperations,
+  saveReadingDeletions,
+  saveReadings,
   saveReferenceTimes,
   saveReferences,
 } from './storage';
-import { generateId, monthOf, round2, todayISO } from './utils';
+import { formatNumber, generateId, monthOf, round2, todayISO } from './utils';
 
 /** Une ligne du budget : ce qui était prévu pour la catégorie et ce qui a été dépensé. */
 export interface BudgetLine {
@@ -64,7 +74,13 @@ export interface SyncState {
   referenceTimes: ReferenceTimes;
   /** Catégories créées par l'utilisateur */
   categories: Category[];
+  /** Relevés de la page Moto, ceux qui ont été supprimés et le prix du litre */
+  moto: MotoReading[];
+  motoDeleted: Deletions;
+  fuelPrice: FuelPrice;
 }
+
+export type NewReading = Omit<MotoReading, 'id' | 'updatedAt'>;
 
 /** Noms de catégories utilisés dans des données importées */
 function categoriesIn(data: VolakoData): string[] {
@@ -95,6 +111,12 @@ export class BudgetStore {
   /** Catégories créées par l'utilisateur, après les 12 de départ */
   readonly customCategories = signal<Category[]>(loadCategories());
   readonly categories = computed(() => [...CATEGORIES, ...this.customCategories()]);
+  /** Suivi de la moto */
+  readonly readings = signal<MotoReading[]>(loadReadings());
+  readonly readingsDeleted = signal<Deletions>(loadReadingDeletions());
+  readonly fuelPrice = signal<FuelPrice>(loadFuelPrice());
+  /** Journal moto complet (relevés + dépenses Essence), du plus ancien au plus récent */
+  readonly motoEvents = computed(() => motoEvents(this.readings(), this.operations(), this.fuelPrice().price));
 
   /** État complet à synchroniser */
   readonly syncState = computed<SyncState>(() => ({
@@ -104,6 +126,9 @@ export class BudgetStore {
     references: this.references(),
     referenceTimes: this.referenceTimes(),
     categories: this.customCategories(),
+    moto: this.readings(),
+    motoDeleted: this.readingsDeleted(),
+    fuelPrice: this.fuelPrice(),
   }));
 
   /** Solde de chaque compte */
@@ -124,6 +149,9 @@ export class BudgetStore {
     effect(() => saveBudgets(this.budgets()));
     effect(() => saveDeletions(this.deleted()));
     effect(() => saveReferenceTimes(this.referenceTimes()));
+    effect(() => saveReadings(this.readings()));
+    effect(() => saveReadingDeletions(this.readingsDeleted()));
+    effect(() => saveFuelPrice(this.fuelPrice()));
     effect(() => {
       const list = this.customCategories();
       saveCategories(list);
@@ -160,6 +188,9 @@ export class BudgetStore {
     this.references.set(state.references);
     this.referenceTimes.set(state.referenceTimes);
     this.customCategories.set(state.categories);
+    this.readings.set(state.moto);
+    this.readingsDeleted.set(state.motoDeleted);
+    this.fuelPrice.set(state.fuelPrice);
   }
 
   /** Note la suppression de ces opérations (pour qu'elles ne reviennent pas d'un autre appareil) */
@@ -273,12 +304,29 @@ export class BudgetStore {
   add(data: NewOperation, fees = 0): number {
     const id = generateId(this.operations());
     this.operations.update((list) => {
-      const op: Operation = { ...data, id, parentId: null, updatedAt: Date.now() };
+      const op: Operation = { ...this.withFuelPrice(data), id, parentId: null, updatedAt: Date.now() };
       const next = [...list, op];
       if (fees > 0) next.push(this.feeOperation(op, fees, generateId(next)));
       return next;
     });
     return id;
+  }
+
+  /** Une dépense Essence garde le prix du litre du jour : ses litres ne changent pas si le prix bouge */
+  private withFuelPrice<T extends Partial<NewOperation>>(data: T, current?: Operation): T {
+    const category = data.category ?? current?.category;
+    if (category !== FUEL_CATEGORY || data.fuelPrice || current?.fuelPrice) return data;
+    return { ...data, fuelPrice: this.fuelPrice().price };
+  }
+
+  /**
+   * Message d'erreur si ce kilométrage est plus petit qu'un relevé d'avant cette date (faute de frappe),
+   * '' sinon. `exceptKey` : le point du journal en cours de modification.
+   */
+  kmError(date: string, km: number | undefined | null, exceptKey?: string): string {
+    if (km === null || km === undefined) return '';
+    const max = maxKmBefore(this.motoEvents(), date, exceptKey);
+    return max !== null && km < max ? `Le compteur affichait déjà ${formatNumber(max)} km avant cette date` : '';
   }
 
   private feeOperation(parent: Operation, amount: number, id: number): Operation {
@@ -302,7 +350,7 @@ export class BudgetStore {
     const fee = fees === undefined ? undefined : this.operations().find((op) => op.parentId === id);
     if (fee && fees === 0) this.markDeleted([fee.id]);
     this.operations.update((list) => {
-      let next = list.map((op) => (op.id === id ? { ...op, ...changes, updatedAt: now } : op));
+      let next = list.map((op) => (op.id === id ? { ...op, ...this.withFuelPrice(changes, op), updatedAt: now } : op));
       if (fees === undefined) return next;
 
       const parent = next.find((op) => op.id === id);
@@ -342,6 +390,37 @@ export class BudgetStore {
     this.referenceTimes.update((times) => ({ ...times, [key]: Date.now() }));
   }
 
+  /* ---------- Moto ---------- */
+
+  addReading(data: NewReading): void {
+    this.readings.update((list) => [...list, { ...data, id: generateId(list), updatedAt: Date.now() }]);
+  }
+
+  updateReading(id: number, data: NewReading): void {
+    const now = Date.now();
+    this.readings.update((list) => list.map((r) => (r.id === id ? { ...data, id, updatedAt: now } : r)));
+  }
+
+  /** Supprime le relevé et le renvoie, pour pouvoir annuler */
+  removeReading(id: number): MotoReading | undefined {
+    const removed = this.readings().find((r) => r.id === id);
+    if (!removed) return undefined;
+    this.readings.update((list) => list.filter((r) => r.id !== id));
+    this.readingsDeleted.update((all) => ({ ...all, [id]: Date.now() }));
+    return removed;
+  }
+
+  restoreReading(reading: MotoReading): void {
+    this.readingsDeleted.update((all) => Object.fromEntries(Object.entries(all).filter(([id]) => Number(id) !== reading.id)));
+    this.readings.update((list) =>
+      list.some((r) => r.id === reading.id) ? list : [...list, { ...reading, updatedAt: Date.now() }],
+    );
+  }
+
+  setFuelPrice(price: number): void {
+    this.fuelPrice.set({ price, updatedAt: Date.now() });
+  }
+
   /* ---------- Import d'un fichier CSV ---------- */
 
   /** Efface tout et reprend les données du fichier. */
@@ -355,6 +434,11 @@ export class BudgetStore {
     this.references.set(data.references);
     this.referenceTimes.set({ banque: now, mvola: now });
     this.budgets.set(Object.fromEntries(Object.entries(data.budgets).map(([m, b]) => [m, { ...b, updatedAt: now }])));
+    const keptReadings = new Set(data.moto.map((r) => r.id));
+    const gone = this.readings().filter((r) => !keptReadings.has(r.id));
+    this.readingsDeleted.update((all) => ({ ...all, ...Object.fromEntries(gone.map((r) => [r.id, now])) }));
+    this.readings.set(data.moto.map((r) => ({ ...r, updatedAt: now })));
+    if (data.fuelPrice) this.setFuelPrice(data.fuelPrice.price);
   }
 
   /**
@@ -378,6 +462,9 @@ export class BudgetStore {
       const ref = data.references[key];
       if (!this.references()[key] && ref) this.setReference(key, ref);
     }
+    const knownReadings = new Set(this.readings().map((r) => r.id));
+    const newReadings = data.moto.filter((r) => !knownReadings.has(r.id)).map((r) => ({ ...r, updatedAt: now }));
+    this.readings.update((list) => [...list, ...newReadings]);
     return added.length;
   }
 }

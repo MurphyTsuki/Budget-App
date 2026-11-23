@@ -5,8 +5,10 @@ import { BudgetStore } from '../../budget-store';
 import { AmountFieldComponent } from '../../components/amount-field/amount-field';
 import { DateFieldComponent } from '../../components/date-field/date-field';
 import { CategorySheetComponent } from '../../components/category-sheet/category-sheet';
+import { FuelFieldsComponent, readFuelFields } from '../../components/fuel-fields/fuel-fields';
 import { IconComponent } from '../../components/icon/icon';
 import { PhotoFieldComponent } from '../../components/photo-field/photo-field';
+import { FUEL_CATEGORY } from '../../models';
 import { PhotoService } from '../../photos';
 import { MoneyPipe } from '../../pipes';
 import { UiService } from '../../ui.service';
@@ -23,6 +25,7 @@ type DateChoice = 'today' | 'yesterday' | 'other';
     AmountFieldComponent,
     CategorySheetComponent,
     DateFieldComponent,
+    FuelFieldsComponent,
     IconComponent,
     PhotoFieldComponent,
     MoneyPipe,
@@ -42,6 +45,10 @@ export class AddExpenseComponent {
   protected readonly otherDate = signal('');
   protected readonly photo = signal<Blob | null>(null);
   protected readonly photoName = signal('');
+  /** Dépense Essence : kilométrage et essence restante pour le suivi moto */
+  protected readonly fuelCategory = FUEL_CATEGORY;
+  protected readonly km = signal('');
+  protected readonly left = signal('');
   /** Fenêtre « Nouvelle catégorie » */
   protected readonly creating = signal(false);
 
@@ -69,10 +76,14 @@ export class AddExpenseComponent {
     if (amount === null) return this.ui.notify('Indique un montant', true);
     if (!category) return this.ui.notify('Choisis une catégorie', true);
     if (!date) return this.ui.notify(DATE_ERROR, true);
+    const moto = category === FUEL_CATEGORY ? readFuelFields(this.km(), this.left()) : {};
+    if (typeof moto === 'string') return this.ui.notify(moto, true);
+    const kmError = this.store.kmError(date, moto.odometer);
+    if (kmError) return this.ui.notify(kmError, true);
 
     // Sans libellé, la dépense prend le nom de sa catégorie
     const description = this.description().trim() || category;
-    const id = this.store.add({ kind: 'depense', account: 'cash', amount, description, date, category, channel: 'especes' });
+    const id = this.store.add({ kind: 'depense', account: 'cash', amount, description, date, category, channel: 'especes', ...moto });
     const photo = this.photo();
     if (photo) void this.photos.attach(id, photo, this.photoName());
 
@@ -81,6 +92,8 @@ export class AddExpenseComponent {
     this.category.set('');
     this.dateChoice.set('today');
     this.otherDate.set('');
+    this.km.set('');
+    this.left.set('');
     this.photo.set(null);
     this.photoName.set('');
     this.ui.notify('Dépense en espèces enregistrée');

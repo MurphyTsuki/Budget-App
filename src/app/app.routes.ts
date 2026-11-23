@@ -9,12 +9,13 @@ import { BudgetComponent } from './pages/budget/budget';
 import { CashComponent } from './pages/cash/cash';
 import { HomeComponent } from './pages/home/home';
 import { JournalComponent } from './pages/journal/journal';
+import { MotoComponent } from './pages/moto/moto';
 import { MvolaComponent } from './pages/mvola/mvola';
 
 /*
  * Adresses :
  *   #/accueil  #/budget  #/budget/2026-12  #/budget/2026-12/definir  #/budget/2026-12/categorie/Essence
- *   #/ajouter  #/depenses  #/comptes  #/comptes/banque  #/comptes/especes  #/comptes/mvola
+ *   #/ajouter  #/depenses  #/comptes  #/comptes/banque  #/comptes/especes  #/comptes/mvola  #/moto
  */
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'accueil' },
@@ -29,6 +30,7 @@ export const routes: Routes = [
   { path: 'comptes/banque', component: BankComponent },
   { path: 'comptes/especes', component: CashComponent },
   { path: 'comptes/mvola', component: MvolaComponent },
+  { path: 'moto', component: MotoComponent },
   // Anciennes adresses
   { path: 'tableau', redirectTo: 'depenses' },
   { path: 'revenus', redirectTo: 'comptes' },

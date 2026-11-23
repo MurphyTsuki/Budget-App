@@ -170,6 +170,9 @@
       <div class="panel stack tight">
         <span>{{ file.data.operationCount }} opération{{ file.data.operationCount > 1 ? 's' : '' }}</span>
         <span>{{ file.data.budgetLines }} ligne{{ file.data.budgetLines > 1 ? 's' : '' }} de budget</span>
+        @if (file.data.readingCount) {
+          <span>{{ file.data.readingCount }} relevé{{ file.data.readingCount > 1 ? 's' : '' }} moto</span>
+        }
         @if (file.data.months; as m) {
           <span class="muted">
             @if (m[0] === m[1]) {

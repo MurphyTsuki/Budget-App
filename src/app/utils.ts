@@ -105,10 +105,15 @@ export function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
-/** Montants affichés avec au plus 2 décimales (1 500,5 / 1 500,25). */
-export function formatMoney(n: number): string {
+/** Nombre affiché à la française avec au plus `digits` décimales (12 450 / 1,5). */
+export function formatNumber(n: number, digits = 2): string {
   // Espace insécable classique : l'espace fine (U+202F) n'existe pas dans les polices Outfit et JetBrains Mono
-  return n.toLocaleString('fr-FR', { maximumFractionDigits: 2 }).replace(/ /g, ' ');
+  return n.toLocaleString('fr-FR', { maximumFractionDigits: digits }).replace(/ /g, ' ');
+}
+
+/** Montants en ariary, avec au plus 2 décimales (1 500,5 Ar / 1 500,25 Ar). */
+export function formatMoney(n: number): string {
+  return formatNumber(n) + ' Ar';
 }
 
 /** Nombre -> texte pour un champ de saisie (1500.5 -> "1500,5"). */

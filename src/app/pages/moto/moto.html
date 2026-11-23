@@ -1,0 +1,155 @@
+@let s = stats();
+
+<div class="back-head">
+  <a routerLink="/accueil" class="round-btn" aria-label="Retour à l'accueil"><app-icon name="left" /></a>
+  <span>
+    <span class="label">Moto</span>
+    <span class="account-title">Consommation</span>
+  </span>
+</div>
+
+<!-- Consommation moyenne sur tous les relevés -->
+<div class="panel moto-hero">
+  <div class="seg moto-unit" role="group" aria-label="Unité">
+    <button type="button" [attr.aria-pressed]="unit() === 'kml'" (click)="setUnit('kml')">km/L</button>
+    <button type="button" [attr.aria-pressed]="unit() === 'l100'" (click)="setUnit('l100')">L/100 km</button>
+  </div>
+  <span class="label">Consommation moyenne</span>
+  @if (average(); as a) {
+    <span class="hero-number">{{ a }} <span class="moto-unit-label">{{ unitLabel() }}</span></span>
+  } @else {
+    <span class="hero-number faint">—</span>
+    <p class="hint">
+      Il faut au moins deux relevés avec le kilométrage et l'essence restante pour calculer la moyenne.
+    </p>
+  }
+  <div class="moto-stats">
+    <span>
+      <span class="label">Ce mois-ci</span>
+      <span class="num">{{ num(s.monthKm) }} km</span>
+    </span>
+    <span>
+      <span class="label">Coût au km</span>
+      <span class="num">{{ costPerKm() ?? '—' }}</span>
+    </span>
+    <span>
+      <span class="label">Compteur</span>
+      <span class="num">{{ s.lastKm === null ? '—' : num(s.lastKm) + ' km' }}</span>
+    </span>
+  </div>
+</div>
+
+<!-- Prix du litre : sert à calculer les litres des dépenses Essence -->
+<div class="panel moto-price">
+  @if (editingPrice()) {
+    <form class="moto-price-form" (ngSubmit)="savePrice()">
+      <label class="label" for="fuel-price">Prix du litre (Ar)</label>
+      <app-amount-field inputId="fuel-price" placeholder="Ex: 5300" [(value)]="priceText" />
+      <div class="btn-row">
+        <button type="button" class="btn" (click)="editingPrice.set(false)">Annuler</button>
+        <button type="submit" class="btn primary">Enregistrer</button>
+      </div>
+    </form>
+  } @else {
+    <span class="row-between moto-price-row">
+      <span>
+        <span class="label">Prix du litre</span>
+        <span class="num strong">{{ store.fuelPrice().price | money }}</span>
+      </span>
+      <button type="button" class="chip" (click)="startPriceEdit()">Modifier</button>
+    </span>
+  }
+</div>
+
+<div class="section-head">
+  <span class="label">Journal</span>
+  <span class="label faint">{{ journal().length }} ligne{{ journal().length > 1 ? 's' : '' }}</span>
+</div>
+<div class="stack tight">
+  @for (e of journal(); track e.key) {
+    <div
+      class="op clickable"
+      role="button"
+      tabindex="0"
+      [class.editing]="!!e.reading && editing()?.id === e.reading.id"
+      (click)="open(e)"
+      (keydown.enter)="open(e)"
+    >
+      @if (e.op) {
+        <span class="bubble tinted" [style.--c]="fuelColor"><app-icon name="fuel" /></span>
+      } @else {
+        <span class="bubble"><app-icon name="gauge" /></span>
+      }
+      <span class="op-info">
+        <span class="op-title">
+          @if (e.km !== null) {
+            {{ num(e.km) }} km
+          } @else {
+            {{ e.op ? e.op.description : 'Essence ajoutée' }}
+          }
+        </span>
+        <span class="op-sub">{{ details(e) }}</span>
+      </span>
+      <span class="moto-side">
+        @if (e.added) {
+          <span class="num">+{{ num(e.added) }} L</span>
+        }
+        @if (consumption(e.kmPerL); as c) {
+          <span class="label">{{ c }} {{ unitLabel() }}</span>
+        }
+      </span>
+    </div>
+  } @empty {
+    <div class="panel empty-card">
+      Aucun relevé pour l'instant.<br />
+      Note ton kilométrage ci-dessous ; tes dépenses Essence s'ajouteront ici toutes seules.
+    </div>
+  }
+</div>
+
+<!-- Nouveau relevé (ou modification d'un relevé touché dans le journal) -->
+<div class="panel moto-form" #form>
+  <div class="label">{{ editing() ? 'Modifier le relevé' : 'Nouveau relevé' }}</div>
+  <form class="stack" (ngSubmit)="submit()">
+    <div class="chips" role="group" aria-label="Date">
+      <button type="button" class="chip" [attr.aria-pressed]="dateChoice() === 'today'" (click)="dateChoice.set('today')">
+        Aujourd'hui
+      </button>
+      <button type="button" class="chip" [attr.aria-pressed]="dateChoice() === 'yesterday'" (click)="dateChoice.set('yesterday')">
+        Hier
+      </button>
+      <button type="button" class="chip" [attr.aria-pressed]="dateChoice() === 'other'" (click)="dateChoice.set('other')">
+        Autre date
+      </button>
+    </div>
+    @if (dateChoice() === 'other') {
+      <app-date-field inputId="moto-date" [(value)]="otherDate" />
+    }
+
+    <div class="grid-2">
+      <div class="field">
+        <label class="label" for="moto-km">Kilométrage</label>
+        <app-amount-field inputId="moto-km" placeholder="Ex: 12450" [(value)]="km" />
+      </div>
+      <div class="field">
+        <label class="label" for="moto-left">Reste (L)</label>
+        <app-amount-field inputId="moto-left" placeholder="Ex: 1,5" [(value)]="left" />
+      </div>
+    </div>
+    <div class="field">
+      <label class="label" for="moto-added">Essence ajoutée (L) <span class="faint">(hors dépense Essence)</span></label>
+      <app-amount-field inputId="moto-added" placeholder="Ex: 1" [(value)]="added" />
+    </div>
+
+    @if (error()) {
+      <p class="form-error" role="alert">{{ error() }}</p>
+    }
+    <button type="submit" class="btn primary big">{{ editing() ? 'Enregistrer les modifications' : 'Enregistrer le relevé' }}</button>
+    @if (editing()) {
+      <div class="btn-row">
+        <button type="button" class="btn" (click)="reset()">Annuler</button>
+        <button type="button" class="btn danger" (click)="remove()">Supprimer</button>
+      </div>
+    }
+  </form>
+</div>

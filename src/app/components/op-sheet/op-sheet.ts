@@ -2,12 +2,13 @@ import { Component, computed, effect, inject, model, signal, untracked } from '@
 import { FormsModule } from '@angular/forms';
 
 import { BudgetStore, NewOperation } from '../../budget-store';
-import { TRANSFER_CATEGORY } from '../../models';
+import { FUEL_CATEGORY, TRANSFER_CATEGORY } from '../../models';
 import { PhotoService } from '../../photos';
 import { UiService } from '../../ui.service';
 import { DATE_ERROR, formatMoney, parseAmount, parseFrDate, parseNumber, todayISO } from '../../utils';
 import { AmountFieldComponent } from '../amount-field/amount-field';
 import { DateFieldComponent } from '../date-field/date-field';
+import { FuelFieldsComponent, readFuelFields } from '../fuel-fields/fuel-fields';
 import { PhotoFieldComponent } from '../photo-field/photo-field';
 
 /** Les formulaires d'ajout des pages Banque, Espèces et MVola. */
@@ -120,7 +121,7 @@ const SHEETS: Record<SheetKind, SheetConfig> = {
 @Component({
   selector: 'app-op-sheet',
   templateUrl: './op-sheet.html',
-  imports: [FormsModule, AmountFieldComponent, DateFieldComponent, PhotoFieldComponent],
+  imports: [FormsModule, AmountFieldComponent, DateFieldComponent, FuelFieldsComponent, PhotoFieldComponent],
   host: { '(document:keydown.escape)': 'close()' },
 })
 export class OpSheetComponent {
@@ -143,6 +144,10 @@ export class OpSheetComponent {
   protected readonly error = signal('');
   protected readonly photo = signal<Blob | null>(null);
   protected readonly photoName = signal('');
+  /** Dépense Essence : kilométrage et essence restante pour le suivi moto */
+  protected readonly fuelCategory = FUEL_CATEGORY;
+  protected readonly km = signal('');
+  protected readonly left = signal('');
   private readonly photos = inject(PhotoService);
 
   /** Total débité (montant + frais) */
@@ -157,7 +162,7 @@ export class OpSheetComponent {
     effect(() => {
       if (!this.kind()) return;
       untracked(() => {
-        for (const field of [this.amount, this.description, this.category, this.fees, this.date, this.error, this.photoName]) {
+        for (const field of [this.amount, this.description, this.category, this.fees, this.date, this.error, this.photoName, this.km, this.left]) {
           field.set('');
         }
         this.photo.set(null);
@@ -191,8 +196,12 @@ export class OpSheetComponent {
     if (config.category && !this.category()) return this.error.set('Choisis une catégorie');
     if (fees === null) return this.error.set('Frais invalides');
     if (!date) return this.error.set(DATE_ERROR);
+    const moto = config.category && this.category() === FUEL_CATEGORY ? readFuelFields(this.km(), this.left()) : {};
+    if (typeof moto === 'string') return this.error.set(moto);
+    const kmError = this.store.kmError(date, moto.odometer);
+    if (kmError) return this.error.set(kmError);
 
-    const id = this.store.add(config.build(amount, description, date, this.category()), fees);
+    const id = this.store.add({ ...config.build(amount, description, date, this.category()), ...moto }, fees);
     const photo = config.photo ? this.photo() : null;
     if (photo) void this.photos.attach(id, photo, this.photoName());
     this.ui.notify(config.done);

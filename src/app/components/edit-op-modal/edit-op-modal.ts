@@ -2,12 +2,13 @@ import { Component, computed, effect, inject, signal, untracked } from '@angular
 import { FormsModule } from '@angular/forms';
 
 import { BudgetStore } from '../../budget-store';
-import { Operation } from '../../models';
+import { FUEL_CATEGORY, Operation } from '../../models';
 import { PhotoService } from '../../photos';
 import { UiService } from '../../ui.service';
 import { DATE_ERROR, amountToInput, isoToFr, parseAmount, parseFrDate, parseNumber } from '../../utils';
 import { AmountFieldComponent } from '../amount-field/amount-field';
 import { DateFieldComponent } from '../date-field/date-field';
+import { FuelFieldsComponent, readFuelFields } from '../fuel-fields/fuel-fields';
 import { PhotoFieldComponent } from '../photo-field/photo-field';
 
 const TITLES: Record<Operation['kind'], string> = {
@@ -22,7 +23,7 @@ const TITLES: Record<Operation['kind'], string> = {
 @Component({
   selector: 'app-edit-op-modal',
   templateUrl: './edit-op-modal.html',
-  imports: [FormsModule, AmountFieldComponent, DateFieldComponent, PhotoFieldComponent],
+  imports: [FormsModule, AmountFieldComponent, DateFieldComponent, FuelFieldsComponent, PhotoFieldComponent],
   host: {
     '(document:keydown.escape)': 'onEscape()',
   },
@@ -59,6 +60,10 @@ export class EditOpModalComponent {
   protected readonly error = signal('');
   protected readonly photo = signal<Blob | null>(null);
   protected readonly photoName = signal('');
+  /** Dépense Essence : kilométrage et essence restante pour le suivi moto */
+  protected readonly fuelCategory = FUEL_CATEGORY;
+  protected readonly km = signal('');
+  protected readonly left = signal('');
 
   constructor() {
     // À l'ouverture : remplit les champs avec l'opération choisie
@@ -77,6 +82,8 @@ export class EditOpModalComponent {
         this.fees.set(fee ? amountToInput(fee.amount) : '');
         this.date.set(isoToFr(op.date));
         this.category.set(op.category ?? '');
+        this.km.set(op.odometer === undefined ? '' : amountToInput(op.odometer));
+        this.left.set(op.fuelLeft === undefined ? '' : amountToInput(op.fuelLeft));
         this.error.set('');
         this.photo.set(null);
         this.photoName.set('');
@@ -105,8 +112,19 @@ export class EditOpModalComponent {
     if (amount === null) return this.error.set('Montant invalide');
     if (!date) return this.error.set(DATE_ERROR);
     if (fees === null) return this.error.set('Frais invalides');
+    const fuel = this.hasCategory() && this.category() === FUEL_CATEGORY;
+    const moto = fuel ? readFuelFields(this.km(), this.left()) : {};
+    if (typeof moto === 'string') return this.error.set(moto);
+    const kmError = this.store.kmError(date, moto.odometer, 'o' + op.id);
+    if (kmError) return this.error.set(kmError);
 
-    const changes = { description, amount, date, ...(this.hasCategory() ? { category: this.category() } : {}) };
+    const changes = {
+      description,
+      amount,
+      date,
+      ...(this.hasCategory() ? { category: this.category() } : {}),
+      ...(fuel ? { odometer: moto.odometer, fuelLeft: moto.fuelLeft } : {}),
+    };
     this.store.update(op.id, changes, this.hasFees() ? fees : undefined);
     const photo = this.photo();
     if (photo) void this.photos.attach(op.id, photo, this.photoName());

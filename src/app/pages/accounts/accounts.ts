@@ -104,11 +104,7 @@ export class AccountsComponent {
   }
 
   protected exportData(): void {
-    const csv = exportCsv({
-      operations: this.store.operations(),
-      references: this.store.references(),
-      budgets: this.store.budgets(),
-    });
+    const csv = exportCsv(this.store.syncState());
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
     const link = document.createElement('a');
     link.href = url;
@@ -125,7 +121,7 @@ export class AccountsComponent {
     if (!file) return;
 
     const data = parseCsv(await file.text());
-    if (data.operationCount === 0 && data.budgetLines === 0) {
+    if (data.operationCount === 0 && data.budgetLines === 0 && data.readingCount === 0) {
       this.ui.notify(data.errors[0] ?? 'Aucune donnée trouvée dans ce fichier', true);
       return;
     }

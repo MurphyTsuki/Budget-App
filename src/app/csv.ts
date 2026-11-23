@@ -1,21 +1,27 @@
 /*
  * Export et lecture du fichier CSV de Volako.
  * Format pensé pour Excel en français : séparateur « ; », virgule décimale, encodage UTF-8 avec BOM.
- * Une seule feuille : les soldes de référence et les budgets en haut, puis les opérations.
+ * Une seule feuille : les soldes de référence, le prix du litre et les budgets en haut,
+ * puis les opérations et les relevés moto.
  */
 
 import {
   ACCOUNTS,
   AccountKey,
   Channel,
+  DEFAULT_FUEL_PRICE,
   FEES_CATEGORY,
+  FUEL_CATEGORY,
+  FuelPrice,
   MonthBudget,
+  MotoReading,
   Operation,
   OperationKind,
   Reference,
   ReferenceKey,
   isCategoryName,
 } from './models';
+import { litersOf } from './moto';
 import { pad2 } from './utils';
 
 const HEADER = [
@@ -30,6 +36,10 @@ const HEADER = [
   'Frais',
   'Budget catégorie (mois)',
   'Photo',
+  'Kilométrage',
+  'Essence restante (L)',
+  'Essence ajoutée (L)',
+  'Prix du litre',
 ];
 
 /** Types de ligne : le nom affiché dans le fichier et l'opération qu'il désigne. */
@@ -45,6 +55,8 @@ const OPERATION_TYPES: { label: string; kind: OperationKind; channel: Channel | 
 ];
 const BUDGET_TYPE = 'Budget';
 const REFERENCE_TYPE = 'Solde de référence';
+const FUEL_PRICE_TYPE = 'Prix du litre';
+const READING_TYPE = 'Relevé moto';
 
 /** Préfixe des identifiants : sans lui, Excel les transforme en 1,795E+12 et les abîme. */
 const ID_PREFIX = 'V';
@@ -53,12 +65,15 @@ export interface VolakoData {
   operations: Operation[];
   references: Record<ReferenceKey, Reference | null>;
   budgets: Record<string, MonthBudget>;
+  moto: MotoReading[];
+  fuelPrice?: FuelPrice | null;
 }
 
 export interface ParsedCsv extends VolakoData {
   /** Nombre d'opérations lues (sans compter les lignes de frais recréées) */
   operationCount: number;
   budgetLines: number;
+  readingCount: number;
   /** Premier et dernier mois présents dans le fichier */
   months: [string, string] | null;
   /** Lignes ignorées, avec la raison */
@@ -70,6 +85,11 @@ export interface ParsedCsv extends VolakoData {
 /** Montant pour Excel : virgule décimale, sans séparateur de milliers ("12000,5") */
 function amountCell(n: number): string {
   return String(n).replace('.', ',');
+}
+
+/** Nombre facultatif (kilométrage, litres) */
+function optionalCell(n: number | null | undefined): string {
+  return n === null || n === undefined ? '' : amountCell(n);
 }
 
 /** Heure de saisie, retrouvée à partir de l'identifiant (l'instant de création) */
@@ -89,17 +109,21 @@ function typeLabel(op: Operation): string {
 
 export function exportCsv(data: VolakoData): string {
   const rows: string[][] = [HEADER];
+  // Les lignes sans colonnes moto sont complétées par des cases vides
+  const push = (row: string[]) => rows.push([...row, ...Array<string>(HEADER.length - row.length).fill('')]);
+  const price = data.fuelPrice?.price ?? DEFAULT_FUEL_PRICE;
 
   for (const key of ['banque', 'mvola'] as const) {
     const ref = data.references[key];
-    if (ref) rows.push([REFERENCE_TYPE, '', ref.date, '', ACCOUNTS[key].name, '', '', amountCell(ref.amount), '', '', '']);
+    if (ref) push([REFERENCE_TYPE, '', ref.date, '', ACCOUNTS[key].name, '', '', amountCell(ref.amount)]);
   }
+  if (data.fuelPrice) push([FUEL_PRICE_TYPE, '', '', '', '', '', 'Ar par litre', amountCell(price)]);
 
   for (const month of Object.keys(data.budgets).sort()) {
     const budget = data.budgets[month];
     const edits = `${budget.edits} modification${budget.edits > 1 ? 's' : ''} utilisée${budget.edits > 1 ? 's' : ''}`;
     for (const [category, amount] of Object.entries(budget.amounts)) {
-      rows.push([BUDGET_TYPE, '', month, '', '', category, edits, amountCell(amount), '', '', '']);
+      push([BUDGET_TYPE, '', month, '', '', category, edits, amountCell(amount)]);
     }
   }
 
@@ -114,7 +138,8 @@ export function exportCsv(data: VolakoData): string {
 
   for (const op of operations) {
     const planned = op.category ? data.budgets[op.date.slice(0, 7)]?.amounts[op.category] : undefined;
-    rows.push([
+    const fuel = op.kind === 'depense' && op.category === FUEL_CATEGORY;
+    push([
       typeLabel(op),
       ID_PREFIX + op.id,
       op.date,
@@ -126,6 +151,17 @@ export function exportCsv(data: VolakoData): string {
       fees.has(op.id) ? amountCell(fees.get(op.id)!) : '',
       planned === undefined ? '' : amountCell(planned),
       op.photo ?? '',
+      optionalCell(op.odometer),
+      optionalCell(op.fuelLeft),
+      fuel ? amountCell(litersOf(op, price)) : '',
+      optionalCell(op.fuelPrice),
+    ]);
+  }
+
+  for (const r of [...data.moto].sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id)) {
+    push([
+      READING_TYPE, ID_PREFIX + r.id, r.date, timeOf(r.id), '', '', '', '', '', '', '',
+      optionalCell(r.km), optionalCell(r.fuelLeft), optionalCell(r.added), '',
     ]);
   }
 
@@ -227,8 +263,11 @@ export function parseCsv(text: string): ParsedCsv {
     operations: [],
     references: { banque: null, mvola: null },
     budgets: {},
+    moto: [],
+    fuelPrice: null,
     operationCount: 0,
     budgetLines: 0,
+    readingCount: 0,
     months: null,
     errors: [],
   };
@@ -249,6 +288,19 @@ export function parseCsv(text: string): ParsedCsv {
   const usedIds = new Set<number>();
   const months: string[] = [];
 
+  /** Identifiant d'origine si possible (pour reconnaître les doublons), sinon un nouveau */
+  const idOf = (text: string, line: number) => {
+    let id = Number(text.replace(new RegExp('^' + ID_PREFIX, 'i'), ''));
+    if (!Number.isSafeInteger(id) || id <= 0 || usedIds.has(id)) id = Date.now() + line * 2;
+    while (usedIds.has(id)) id++;
+    usedIds.add(id);
+    return id;
+  };
+  const positiveCell = (text: string) => {
+    const n = parseAmountCell(text);
+    return n !== null && n >= 0 ? n : null;
+  };
+
   rows.slice(1).forEach((row, i) => {
     const line = i + 2;
     const get = (name: string) => (index[name] >= 0 ? (row[index[name]] ?? '').trim() : '');
@@ -263,6 +315,29 @@ export function parseCsv(text: string): ParsedCsv {
         return;
       }
       result.references[key] = { date, amount };
+      return;
+    }
+
+    if (type === FUEL_PRICE_TYPE) {
+      if (amount === null || amount <= 0) {
+        result.errors.push(`Ligne ${line} : prix du litre invalide`);
+        return;
+      }
+      result.fuelPrice = { price: amount, updatedAt: 0 };
+      return;
+    }
+
+    if (type === READING_TYPE) {
+      const date = parseDateCell(get('Date'));
+      const km = positiveCell(get('Kilométrage'));
+      const added = positiveCell(get('Essence ajoutée (L)')) || null;
+      if (!date || (km === null && added === null)) {
+        result.errors.push(`Ligne ${line} : relevé moto incomplet`);
+        return;
+      }
+      result.moto.push({ id: idOf(get('ID'), line), date, km, fuelLeft: positiveCell(get('Essence restante (L)')), added });
+      result.readingCount++;
+      months.push(date.slice(0, 7));
       return;
     }
 
@@ -303,11 +378,7 @@ export function parseCsv(text: string): ParsedCsv {
       return;
     }
 
-    // Identifiant d'origine si possible (pour reconnaître les doublons), sinon un nouveau
-    let id = Number(get('ID').replace(new RegExp('^' + ID_PREFIX, 'i'), ''));
-    if (!Number.isSafeInteger(id) || id <= 0 || usedIds.has(id)) id = Date.now() + line * 2;
-    while (usedIds.has(id)) id++;
-    usedIds.add(id);
+    const id = idOf(get('ID'), line);
 
     const op: Operation = {
       id,
@@ -322,6 +393,14 @@ export function parseCsv(text: string): ParsedCsv {
     };
     const photo = get('Photo');
     if (photo.startsWith('https://')) op.photo = photo;
+    if (op.category === FUEL_CATEGORY) {
+      const odometer = positiveCell(get('Kilométrage'));
+      const fuelLeft = positiveCell(get('Essence restante (L)'));
+      const fuelPrice = positiveCell(get('Prix du litre'));
+      if (odometer !== null) op.odometer = odometer;
+      if (fuelLeft !== null) op.fuelLeft = fuelLeft;
+      if (fuelPrice) op.fuelPrice = fuelPrice;
+    }
     result.operations.push(op);
     result.operationCount++;
     months.push(date.slice(0, 7));

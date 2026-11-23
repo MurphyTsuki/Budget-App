@@ -31,9 +31,42 @@ export interface Operation {
   parentId: number | null;
   /** Lien vers la photo dans Google Drive (absent tant qu'elle n'est pas envoyée) */
   photo?: string;
+  /** Dépense Essence : kilométrage au compteur au moment du plein */
+  odometer?: number;
+  /** Dépense Essence : litres estimés dans le réservoir avant d'en remettre */
+  fuelLeft?: number;
+  /** Dépense Essence : prix du litre au moment de l'achat (sert à calculer les litres) */
+  fuelPrice?: number;
   /** Dernière modification (ms) : à la synchro, la version la plus récente l'emporte */
   updatedAt?: number;
 }
+
+/** Relevé saisi dans la page Moto : kilométrage, essence restante, essence ajoutée hors dépense. */
+export interface MotoReading {
+  id: number;
+  /** Date au format ISO (AAAA-MM-JJ) */
+  date: string;
+  /** Kilométrage au compteur */
+  km: number | null;
+  /** Litres estimés dans le réservoir (avant l'essence ajoutée) */
+  fuelLeft: number | null;
+  /** Litres ajoutés sans passer par une dépense */
+  added: number | null;
+  updatedAt?: number;
+}
+
+/** Prix du litre d'essence, modifiable dans la page Moto */
+export interface FuelPrice {
+  price: number;
+  /** Dernière modification (ms), pour la synchro */
+  updatedAt: number;
+}
+
+/** Prix du litre au départ (novembre 2026) */
+export const DEFAULT_FUEL_PRICE = 5300;
+
+/** Les dépenses de cette catégorie comptent comme essence mise dans la moto. */
+export const FUEL_CATEGORY = 'Essence';
 
 /** Solde connu d'un compte à une date donnée. */
 export interface Reference {
@@ -102,7 +135,7 @@ export const TRANSFER_CATEGORY = 'Imprévu';
 
 /** Icônes et couleurs proposées pour une catégorie créée */
 export const CATEGORY_ICONS: readonly string[] = [
-  'tag', 'star', 'bolt', 'gem', 'coin', 'cart', 'bus', 'heart', 'leaf', 'house', 'basket', 'phone', 'wrench', 'pin', 'camera', 'target',
+  'tag', 'star', 'bolt', 'gem', 'coin', 'cart', 'bus', 'heart', 'leaf', 'house', 'basket', 'phone', 'wrench', 'pin', 'camera', 'target', 'moto',
 ];
 export const CATEGORY_COLORS: readonly string[] = [
   // Nouvelles teintes d'abord : les 12 suivantes sont déjà prises par les catégories de départ

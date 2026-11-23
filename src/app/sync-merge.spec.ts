@@ -22,6 +22,9 @@ const state = (partial: Partial<SyncState>): SyncState => ({
   references: { banque: null, mvola: null },
   referenceTimes: { banque: 0, mvola: 0 },
   categories: [],
+  moto: [],
+  motoDeleted: {},
+  fuelPrice: { price: 5300, updatedAt: 0 },
   ...partial,
 });
 
@@ -74,5 +77,15 @@ describe('mergeStates', () => {
       state({ categories: [{ name: 'Santé', icon: 'heart', color: '#9fd9c0' }, { name: 'cadeaux', icon: 'tag', color: '#7fb8f0' }] }),
     );
     expect(merged.categories.map((c) => c.name)).toEqual(['Santé', 'cadeaux']);
+  });
+
+  it('réunit les relevés moto et garde le prix du litre le plus récent', () => {
+    const reading = (id: number, km: number, updatedAt: number) => ({ id, date: '2026-11-22', km, fuelLeft: 1, added: null, updatedAt });
+    const merged = mergeStates(
+      state({ moto: [reading(1, 100, 10), reading(2, 200, 10)], motoDeleted: { 3: 50 }, fuelPrice: { price: 5500, updatedAt: 20 } }),
+      state({ moto: [reading(1, 150, 30), reading(3, 300, 10)], fuelPrice: { price: 5300, updatedAt: 10 } }),
+    );
+    expect(merged.moto.map((r) => r.km)).toEqual([150, 200]);
+    expect(merged.fuelPrice.price).toBe(5500);
   });
 });

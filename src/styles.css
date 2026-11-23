@@ -1923,6 +1923,134 @@ body[data-theme] .toast {
   border: 1px solid var(--line);
 }
 
+/* ---------- Moto : kilométrage et consommation ---------- */
+
+/* Accès depuis l'accueil, en haut à droite */
+.home-moto {
+  position: absolute;
+  top: calc(24px + var(--safe-top));
+  right: 16px;
+  z-index: 1;
+  width: 42px;
+  height: 42px;
+  color: var(--text);
+}
+
+.home-moto .icon {
+  width: 22px;
+  height: 22px;
+}
+
+.home-moto + .banner {
+  margin-right: 54px;
+}
+
+.moto-hero {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 4px;
+  margin-top: 16px;
+}
+
+.moto-hero .hint {
+  max-width: 300px;
+}
+
+.moto-unit {
+  width: 100%;
+  max-width: 260px;
+  margin-bottom: 12px;
+}
+
+.moto-unit button {
+  padding: 8px 0;
+  font-size: 13px;
+}
+
+.moto-unit-label {
+  font-size: 18px;
+  color: var(--muted);
+}
+
+.moto-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.moto-stats > span {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.moto-stats .num {
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.moto-price {
+  margin-top: 12px;
+  padding: 12px 16px;
+}
+
+.moto-price-row {
+  align-items: center;
+}
+
+.moto-price-row > span {
+  display: grid;
+  gap: 2px;
+}
+
+.moto-price-form {
+  display: grid;
+  gap: 8px;
+}
+
+.moto-side {
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.moto-side .num {
+  font-size: 15px;
+}
+
+.op.editing {
+  border-color: var(--accent);
+}
+
+.moto-form {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+  scroll-margin-top: 16px;
+}
+
+/* Champs moto d'une dépense Essence */
+.fuel-fields {
+  display: grid;
+  gap: 8px;
+}
+
+.moto-form .grid-2,
+.fuel-fields .grid-2 {
+  align-items: end;
+}
+
+.fuel-fields b {
+  color: var(--text);
+  font-weight: 500;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

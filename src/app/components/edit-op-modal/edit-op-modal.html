@@ -38,6 +38,10 @@
           </div>
         }
 
+        @if (hasCategory() && category() === fuelCategory) {
+          <app-fuel-fields inputId="edit-fuel" [amount]="amount()" [price]="o.fuelPrice" [(km)]="km" [(left)]="left" />
+        }
+
         @if (o.kind === 'depense' && o.channel !== 'frais') {
           @if (o.photo) {
             <a class="btn" [href]="o.photo" target="_blank" rel="noopener">Voir la photo dans Drive</a>

@@ -1,3 +1,7 @@
+<a routerLink="/moto" class="round-btn home-moto" aria-label="Suivi moto : kilométrage et consommation">
+  <app-icon name="moto" />
+</a>
+
 @if (reminder(); as r) {
   <a class="banner" [routerLink]="['/budget', r.month]">
     <app-icon name="bell" />

@@ -3,8 +3,11 @@
 import {
   AccountKey,
   Channel,
+  DEFAULT_FUEL_PRICE,
   Deletions,
+  FuelPrice,
   MonthBudget,
+  MotoReading,
   Operation,
   OperationKind,
   Reference,
@@ -24,6 +27,9 @@ const KEYS = {
   deleted: 'deletedOps',
   referenceTimes: 'referencesUpdatedAt',
   categories: 'customCategories',
+  moto: 'motoReadings',
+  motoDeleted: 'motoDeleted',
+  fuelPrice: 'fuelPrice',
 } as const;
 
 /** Clés de l'ancienne version (dépenses à catégories libres), effacées au premier lancement. */
@@ -76,6 +82,12 @@ export function clearOldData(): void {
   }
 }
 
+/** Nombre positif (kilométrage, litres), ou undefined */
+function positive(value: unknown): number | undefined {
+  const n = typeof value === 'number' ? value : NaN;
+  return Number.isFinite(n) && n >= 0 ? n : undefined;
+}
+
 function normalizeOperation(raw: unknown): Operation | null {
   if (!isRecord(raw)) return null;
   const amount = Number(raw['amount']);
@@ -88,6 +100,9 @@ function normalizeOperation(raw: unknown): Operation | null {
 
   const photo = raw['photo'];
   const updatedAt = raw['updatedAt'];
+  const odometer = positive(raw['odometer']);
+  const fuelLeft = positive(raw['fuelLeft']);
+  const fuelPrice = positive(raw['fuelPrice']);
   return {
     id,
     date,
@@ -99,6 +114,9 @@ function normalizeOperation(raw: unknown): Operation | null {
     channel: isOneOf(CHANNELS, raw['channel']) ? raw['channel'] : null,
     parentId: typeof raw['parentId'] === 'number' ? raw['parentId'] : null,
     ...(typeof photo === 'string' && photo.startsWith('https://') ? { photo } : {}),
+    ...(odometer !== undefined ? { odometer } : {}),
+    ...(fuelLeft !== undefined ? { fuelLeft } : {}),
+    ...(fuelPrice ? { fuelPrice } : {}),
     ...(typeof updatedAt === 'number' && updatedAt > 0 ? { updatedAt } : {}),
   };
 }
@@ -226,4 +244,59 @@ export function loadCategories(): Category[] {
 
 export function saveCategories(list: readonly Category[]): void {
   save(KEYS.categories, list);
+}
+
+/* ---------- Moto ---------- */
+
+function normalizeReading(raw: unknown): MotoReading | null {
+  if (!isRecord(raw) || typeof raw['id'] !== 'number' || !isISODate(raw['date'])) return null;
+  const km = positive(raw['km']) ?? null;
+  const fuelLeft = positive(raw['fuelLeft']) ?? null;
+  const added = positive(raw['added']) || null;
+  if (km === null && added === null) return null;
+  const updatedAt = raw['updatedAt'];
+  return {
+    id: raw['id'],
+    date: raw['date'],
+    km,
+    fuelLeft,
+    added,
+    ...(typeof updatedAt === 'number' && updatedAt > 0 ? { updatedAt } : {}),
+  };
+}
+
+/** Relevés de la page Moto (les lignes invalides sont ignorées) */
+export function normalizeReadings(data: unknown): MotoReading[] {
+  if (!Array.isArray(data)) return [];
+  return data.map(normalizeReading).filter((r): r is MotoReading => r !== null);
+}
+
+export function loadReadings(): MotoReading[] {
+  return normalizeReadings(readJson(KEYS.moto));
+}
+
+export function saveReadings(readings: readonly MotoReading[]): void {
+  save(KEYS.moto, readings);
+}
+
+export function loadReadingDeletions(): Deletions {
+  return normalizeDeletions(readJson(KEYS.motoDeleted));
+}
+
+export function saveReadingDeletions(deleted: Deletions): void {
+  save(KEYS.motoDeleted, deleted);
+}
+
+export function normalizeFuelPrice(data: unknown): FuelPrice {
+  const price = isRecord(data) ? positive(data['price']) : undefined;
+  const updatedAt = isRecord(data) ? positive(data['updatedAt']) : undefined;
+  return price ? { price, updatedAt: updatedAt ?? 0 } : { price: DEFAULT_FUEL_PRICE, updatedAt: 0 };
+}
+
+export function loadFuelPrice(): FuelPrice {
+  return normalizeFuelPrice(readJson(KEYS.fuelPrice));
+}
+
+export function saveFuelPrice(price: FuelPrice): void {
+  save(KEYS.fuelPrice, price);
 }

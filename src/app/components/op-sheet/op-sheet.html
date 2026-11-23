@@ -49,6 +49,10 @@
           </div>
         }
 
+        @if (c.category && category() === fuelCategory) {
+          <app-fuel-fields inputId="sheet-fuel" [amount]="amount()" [(km)]="km" [(left)]="left" />
+        }
+
         @if (c.fees) {
           <div class="field">
             <label class="label" for="sheet-fees">Frais <span class="faint">(0 si aucun)</span></label>
