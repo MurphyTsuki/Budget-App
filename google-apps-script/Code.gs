@@ -5,6 +5,9 @@
  *
  * Les photos vont dans « Volako / <catégorie> / ». L'application ne garde que le lien renvoyé.
  * Quand une dépense est supprimée, sa photo part dans la corbeille du Drive (récupérable 30 jours).
+ *
+ * Synchronisation téléphone ↔ PC : les données de Volako sont aussi gardées dans « Volako / volako-donnees.json »,
+ * avec une copie lisible « Volako / Volako.csv » (Excel, Google Sheets).
  */
 
 // Clé secrète : remplace-la par celle affichée dans Volako (Comptes → Photos Google Drive).
@@ -14,7 +17,10 @@ const SECRET = 'COLLE-ICI-LA-CLE-DE-VOLAKO';
 const ROOT_FOLDER = 'Volako';
 
 // Version du script : Volako la vérifie au test de connexion pour savoir si le déploiement est à jour
-const VERSION = 2;
+const VERSION = 3;
+
+const DATA_FILE = 'volako-donnees.json';
+const CSV_FILE = 'Volako.csv';
 
 function doPost(e) {
   try {
@@ -25,6 +31,8 @@ function doPost(e) {
     if (body.ping) return reply({ ok: true, version: VERSION });
 
     if (body.action === 'trash') return trash(body.url);
+    if (body.action === 'pull') return pull();
+    if (body.action === 'push') return push(body);
 
     const root = folder(DriveApp.getRootFolder(), ROOT_FOLDER);
     const dir = folder(root, body.category || 'Hors budget');
@@ -35,6 +43,43 @@ function doPost(e) {
   } catch (err) {
     return reply({ ok: false, error: String(err) });
   }
+}
+
+/** Renvoie le fichier de données tel quel (null s'il n'existe pas encore) */
+function pull() {
+  const file = findFile(folder(DriveApp.getRootFolder(), ROOT_FOLDER), DATA_FILE);
+  return reply({ ok: true, data: file ? file.getBlob().getDataAsString('UTF-8') : null });
+}
+
+/**
+ * Enregistre les données fusionnées par l'appli, et la copie CSV.
+ * Refuse si un autre appareil a enregistré entre-temps (body.base ne correspond plus) : l'appli refusionne.
+ */
+function push(body) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    const root = folder(DriveApp.getRootFolder(), ROOT_FOLDER);
+    const current = findFile(root, DATA_FILE);
+    const currentSavedAt = current ? (JSON.parse(current.getBlob().getDataAsString('UTF-8')).savedAt || null) : null;
+    if (currentSavedAt !== (body.base || null)) return reply({ ok: false, conflict: true, error: 'Données modifiées par un autre appareil' });
+    writeFile(root, DATA_FILE, body.data, 'application/json');
+    if (body.csv) writeFile(root, CSV_FILE, body.csv, 'text/csv');
+    return reply({ ok: true });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function findFile(dir, name) {
+  const found = dir.getFilesByName(name);
+  return found.hasNext() ? found.next() : null;
+}
+
+function writeFile(dir, name, content, mimeType) {
+  const file = findFile(dir, name);
+  if (file) file.setContent(content);
+  else dir.createFile(name, content, mimeType);
 }
 
 /** Met la photo à la corbeille, seulement si elle est rangée dans le dossier Volako */

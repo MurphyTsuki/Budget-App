@@ -63,6 +63,23 @@
       </span>
     </span>
   </button>
+  <button type="button" class="choice" [disabled]="!photos.configured()" (click)="sync.sync()">
+    <span class="bubble"><app-icon name="arrow" /></span>
+    <span class="choice-main">
+      <span class="choice-title">Synchronisation téléphone ↔ PC</span>
+      <span class="hint">
+        @if (!photos.configured()) {
+          Relie d’abord Google Drive
+        } @else if (sync.syncing()) {
+          Synchronisation en cours…
+        } @else if (sync.error()) {
+          {{ sync.error() }}
+        } @else {
+          Synchronisé {{ since(sync.lastSync()) }} · touche pour synchroniser
+        }
+      </span>
+    </span>
+  </button>
   <label class="choice file-choice">
     <span class="bubble"><app-icon name="up" /></span>
     <span class="choice-main">
@@ -86,11 +103,24 @@
         </p>
 
         <div class="field">
-          <span class="label">1. Clé secrète à coller dans le script</span>
+          <label class="label" for="drive-secret">1. Clé secrète, la même dans le script et sur tous tes appareils</label>
           <div class="inline-form">
-            <input type="text" readonly [value]="photos.settings().secret" aria-label="Clé secrète" (focus)="$any($event.target).select()" />
-            <button type="button" class="btn" (click)="copySecret()">Copier</button>
+            <input
+              type="text"
+              id="drive-secret"
+              name="driveSecret"
+              autocomplete="off"
+              spellcheck="false"
+              [value]="secretDraft()"
+              (input)="secretDraft.set($any($event.target).value)"
+            />
+            @if (secretDraft() !== photos.settings().secret) {
+              <button type="button" class="btn primary" (click)="saveSecret()">Utiliser</button>
+            } @else {
+              <button type="button" class="btn" (click)="copySecret()">Copier</button>
+            }
           </div>
+          <p class="hint">Sur un deuxième appareil, colle ici la clé déjà mise dans ton script, puis touche « Utiliser »</p>
         </div>
 
         <div class="field">

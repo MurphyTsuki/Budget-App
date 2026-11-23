@@ -3,11 +3,13 @@
 import {
   AccountKey,
   Channel,
+  Deletions,
   MonthBudget,
   Operation,
   OperationKind,
   Reference,
   ReferenceKey,
+  ReferenceTimes,
   isCategory,
 } from './models';
 import { isISODate } from './utils';
@@ -16,6 +18,8 @@ const KEYS = {
   operations: 'operations',
   references: 'references',
   budgets: 'budgets',
+  deleted: 'deletedOps',
+  referenceTimes: 'referencesUpdatedAt',
 } as const;
 
 /** Clés de l'ancienne version (dépenses à catégories libres), effacées au premier lancement. */
@@ -79,6 +83,7 @@ function normalizeOperation(raw: unknown): Operation | null {
   if (kind === 'depense' && category === null) return null;
 
   const photo = raw['photo'];
+  const updatedAt = raw['updatedAt'];
   return {
     id,
     date,
@@ -90,13 +95,18 @@ function normalizeOperation(raw: unknown): Operation | null {
     channel: isOneOf(CHANNELS, raw['channel']) ? raw['channel'] : null,
     parentId: typeof raw['parentId'] === 'number' ? raw['parentId'] : null,
     ...(typeof photo === 'string' && photo.startsWith('https://') ? { photo } : {}),
+    ...(typeof updatedAt === 'number' && updatedAt > 0 ? { updatedAt } : {}),
   };
 }
 
-export function loadOperations(): Operation[] {
-  const data = readJson(KEYS.operations);
+/** Liste d'opérations venue du stockage ou du fichier de synchro (les lignes invalides sont ignorées) */
+export function normalizeOperations(data: unknown): Operation[] {
   if (!Array.isArray(data)) return [];
   return data.map(normalizeOperation).filter((op): op is Operation => op !== null);
+}
+
+export function loadOperations(): Operation[] {
+  return normalizeOperations(readJson(KEYS.operations));
 }
 
 export function saveOperations(operations: readonly Operation[]): void {
@@ -110,11 +120,14 @@ function normalizeReference(raw: unknown): Reference | null {
   return { date: raw['date'], amount };
 }
 
-/** Soldes de référence de la banque et de MVola. */
-export function loadReferences(): Record<ReferenceKey, Reference | null> {
-  const data = readJson(KEYS.references);
+export function normalizeReferences(data: unknown): Record<ReferenceKey, Reference | null> {
   const raw = isRecord(data) ? data : {};
   return { banque: normalizeReference(raw['banque']), mvola: normalizeReference(raw['mvola']) };
+}
+
+/** Soldes de référence de la banque et de MVola. */
+export function loadReferences(): Record<ReferenceKey, Reference | null> {
+  return normalizeReferences(readJson(KEYS.references));
 }
 
 export function saveReferences(references: Record<ReferenceKey, Reference | null>): void {
@@ -123,7 +136,10 @@ export function saveReferences(references: Record<ReferenceKey, Reference | null
 
 /** Budgets par mois ("AAAA-MM"). */
 export function loadBudgets(): Record<string, MonthBudget> {
-  const data = readJson(KEYS.budgets);
+  return normalizeBudgets(readJson(KEYS.budgets));
+}
+
+export function normalizeBudgets(data: unknown): Record<string, MonthBudget> {
   if (!isRecord(data)) return {};
   const budgets: Record<string, MonthBudget> = {};
   for (const [month, raw] of Object.entries(data)) {
@@ -134,11 +150,51 @@ export function loadBudgets(): Record<string, MonthBudget> {
       if (isCategory(category) && Number.isFinite(amount) && amount >= 0) amounts[category] = amount;
     }
     const edits = Number(raw['edits']);
-    budgets[month] = { amounts, edits: Number.isInteger(edits) && edits > 0 ? edits : 0 };
+    const updatedAt = raw['updatedAt'];
+    budgets[month] = {
+      amounts,
+      edits: Number.isInteger(edits) && edits > 0 ? edits : 0,
+      ...(typeof updatedAt === 'number' && updatedAt > 0 ? { updatedAt } : {}),
+    };
   }
   return budgets;
 }
 
 export function saveBudgets(budgets: Record<string, MonthBudget>): void {
   save(KEYS.budgets, budgets);
+}
+
+/** Nombres positifs rangés par clé (suppressions, dates de modification) */
+function normalizeTimes(data: unknown): Record<string, number> {
+  const times: Record<string, number> = {};
+  if (!isRecord(data)) return times;
+  for (const [key, value] of Object.entries(data)) {
+    if (typeof value === 'number' && value > 0) times[key] = value;
+  }
+  return times;
+}
+
+export function normalizeDeletions(data: unknown): Deletions {
+  return normalizeTimes(data);
+}
+
+export function loadDeletions(): Deletions {
+  return normalizeDeletions(readJson(KEYS.deleted));
+}
+
+export function saveDeletions(deleted: Deletions): void {
+  save(KEYS.deleted, deleted);
+}
+
+export function normalizeReferenceTimes(data: unknown): ReferenceTimes {
+  const times = normalizeTimes(data);
+  return { banque: times['banque'] ?? 0, mvola: times['mvola'] ?? 0 };
+}
+
+export function loadReferenceTimes(): ReferenceTimes {
+  return normalizeReferenceTimes(readJson(KEYS.referenceTimes));
+}
+
+export function saveReferenceTimes(times: ReferenceTimes): void {
+  save(KEYS.referenceTimes, times);
 }

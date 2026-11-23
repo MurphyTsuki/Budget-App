@@ -6,6 +6,7 @@ import { filter, map } from 'rxjs';
 
 import { EditOpModalComponent } from './components/edit-op-modal/edit-op-modal';
 import { IconComponent } from './components/icon/icon';
+import { SyncService } from './sync';
 import { UiService } from './ui.service';
 
 type Tab = 'accueil' | 'budget' | 'ajouter' | 'depenses' | 'comptes';
@@ -33,6 +34,8 @@ export class App {
   protected readonly ui = inject(UiService);
   private readonly router = inject(Router);
   private readonly updates = inject(SwUpdate);
+  // Démarre la synchro entre appareils dès l'ouverture
+  private readonly sync = inject(SyncService);
 
   /** Une nouvelle version de Volako est téléchargée : elle s'appliquera au rechargement */
   protected readonly updateReady = signal(false);

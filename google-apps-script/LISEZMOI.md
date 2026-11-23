@@ -28,7 +28,19 @@ dans `Volako / <catégorie> /`. Il tourne gratuitement chez Google, avec ton com
 
 ## 4. Dans Volako
 
-Colle l'URL dans **Comptes → Photos Google Drive**, puis touche **Tester la connexion**.
+Colle l'URL dans **Comptes → Photos Google Drive**, puis touche **Tester et enregistrer**.
+
+## 5. Sur un deuxième appareil (PC, autre téléphone)
+
+Le même script sert à tous tes appareils, avec **la même clé** :
+
+1. Ouvre Volako sur l'autre appareil, va dans **Comptes → Photos Google Drive**.
+2. Dans le champ de la clé, colle la clé déjà présente dans ton script (ligne `SECRET`), puis touche **Utiliser**.
+3. Colle la même adresse `/exec` et touche **Tester et enregistrer**.
+
+Volako se synchronise alors tout seul : à l'ouverture, au retour du réseau et après chaque modification.
+Les données sont dans `Volako / volako-donnees.json` (ne pas modifier à la main), avec une copie lisible
+`Volako / Volako.csv`.
 
 ## Mettre à jour le script
 

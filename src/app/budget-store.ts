@@ -4,6 +4,7 @@ import {
   AccountKey,
   CATEGORIES,
   Category,
+  Deletions,
   FEES_CATEGORY,
   MAX_BUDGET_EDITS,
   MOVES,
@@ -11,15 +12,20 @@ import {
   Operation,
   Reference,
   ReferenceKey,
+  ReferenceTimes,
 } from './models';
 import type { VolakoData } from './csv';
 import {
   clearOldData,
   loadBudgets,
+  loadDeletions,
   loadOperations,
+  loadReferenceTimes,
   loadReferences,
   saveBudgets,
+  saveDeletions,
   saveOperations,
+  saveReferenceTimes,
   saveReferences,
 } from './storage';
 import { generateId, monthOf, round2, todayISO } from './utils';
@@ -45,6 +51,15 @@ export interface BudgetView {
 
 export type NewOperation = Omit<Operation, 'id' | 'parentId'>;
 
+/** Tout ce qui se synchronise entre appareils */
+export interface SyncState {
+  operations: Operation[];
+  deleted: Deletions;
+  budgets: Record<string, MonthBudget>;
+  references: Record<ReferenceKey, Reference | null>;
+  referenceTimes: ReferenceTimes;
+}
+
 /** Part consommée en %, arrondie (null si 0 prévu et 0 dépensé). */
 export function percentOf(spent: number, budget: number): number | null {
   if (budget > 0) return Math.round((spent / budget) * 100);
@@ -60,6 +75,18 @@ export class BudgetStore {
   readonly operations = signal<Operation[]>(this.load(loadOperations));
   readonly references = signal<Record<ReferenceKey, Reference | null>>(loadReferences());
   readonly budgets = signal<Record<string, MonthBudget>>(loadBudgets());
+  /** Opérations supprimées et date des soldes de référence : utiles à la synchro entre appareils */
+  readonly deleted = signal<Deletions>(loadDeletions());
+  readonly referenceTimes = signal<ReferenceTimes>(loadReferenceTimes());
+
+  /** État complet à synchroniser */
+  readonly syncState = computed<SyncState>(() => ({
+    operations: this.operations(),
+    deleted: this.deleted(),
+    budgets: this.budgets(),
+    references: this.references(),
+    referenceTimes: this.referenceTimes(),
+  }));
 
   /** Solde de chaque compte */
   readonly balances = computed<Record<AccountKey, number>>(() => ({
@@ -77,6 +104,24 @@ export class BudgetStore {
     effect(() => saveOperations(this.operations()));
     effect(() => saveReferences(this.references()));
     effect(() => saveBudgets(this.budgets()));
+    effect(() => saveDeletions(this.deleted()));
+    effect(() => saveReferenceTimes(this.referenceTimes()));
+  }
+
+  /** Remplace tout par l'état fusionné venu de la synchro (les dates de modification sont gardées telles quelles). */
+  applySynced(state: SyncState): void {
+    this.operations.set(state.operations);
+    this.deleted.set(state.deleted);
+    this.budgets.set(state.budgets);
+    this.references.set(state.references);
+    this.referenceTimes.set(state.referenceTimes);
+  }
+
+  /** Note la suppression de ces opérations (pour qu'elles ne reviennent pas d'un autre appareil) */
+  private markDeleted(ids: number[]): void {
+    if (!ids.length) return;
+    const now = Date.now();
+    this.deleted.update((all) => ({ ...all, ...Object.fromEntries(ids.map((id) => [id, now])) }));
   }
 
   /** L'ancienne version rangeait les dépenses dans des catégories libres : ses données sont effacées. */
@@ -173,7 +218,7 @@ export class BudgetStore {
     const existing = this.budgets()[month];
     if (existing && existing.edits >= MAX_BUDGET_EDITS) return false;
     const edits = existing ? existing.edits + 1 : 0;
-    this.budgets.update((all) => ({ ...all, [month]: { amounts, edits } }));
+    this.budgets.update((all) => ({ ...all, [month]: { amounts, edits, updatedAt: Date.now() } }));
     return true;
   }
 
@@ -183,7 +228,7 @@ export class BudgetStore {
   add(data: NewOperation, fees = 0): number {
     const id = generateId(this.operations());
     this.operations.update((list) => {
-      const op: Operation = { ...data, id, parentId: null };
+      const op: Operation = { ...data, id, parentId: null, updatedAt: Date.now() };
       const next = [...list, op];
       if (fees > 0) next.push(this.feeOperation(op, fees, generateId(next)));
       return next;
@@ -202,22 +247,25 @@ export class BudgetStore {
       category: FEES_CATEGORY,
       channel: 'frais',
       parentId: parent.id,
+      updatedAt: Date.now(),
     };
   }
 
   /** Modifie une opération ; ses frais suivent sa date et prennent le montant `fees` (0 = supprimés). */
   update(id: number, changes: Partial<NewOperation>, fees?: number): void {
+    const now = Date.now();
+    const fee = fees === undefined ? undefined : this.operations().find((op) => op.parentId === id);
+    if (fee && fees === 0) this.markDeleted([fee.id]);
     this.operations.update((list) => {
-      let next = list.map((op) => (op.id === id ? { ...op, ...changes } : op));
+      let next = list.map((op) => (op.id === id ? { ...op, ...changes, updatedAt: now } : op));
       if (fees === undefined) return next;
 
       const parent = next.find((op) => op.id === id);
-      const fee = next.find((op) => op.parentId === id);
       if (!parent) return next;
       if (fee && fees > 0) {
-        next = next.map((op) => (op === fee ? { ...op, amount: fees, date: parent.date } : op));
+        next = next.map((op) => (op.id === fee.id ? { ...op, amount: fees, date: parent.date, updatedAt: now } : op));
       } else if (fee) {
-        next = next.filter((op) => op !== fee);
+        next = next.filter((op) => op.id !== fee.id);
       } else if (fees > 0) {
         next = [...next, this.feeOperation(parent, fees, generateId(next))];
       }
@@ -229,24 +277,38 @@ export class BudgetStore {
   remove(id: number): Operation[] {
     const removed = this.operations().filter((op) => op.id === id || op.parentId === id);
     this.operations.update((list) => list.filter((op) => op.id !== id && op.parentId !== id));
+    this.markDeleted(removed.map((op) => op.id));
     return removed;
   }
 
+  /** « Annuler » : l'opération revient, plus récente que sa suppression */
   restore(removed: Operation[]): void {
-    this.operations.update((list) => [...list, ...removed.filter((op) => !list.some((o) => o.id === op.id))]);
+    const now = Date.now();
+    const ids = new Set(removed.map((op) => op.id));
+    this.deleted.update((all) => Object.fromEntries(Object.entries(all).filter(([id]) => !ids.has(Number(id)))));
+    this.operations.update((list) => [
+      ...list,
+      ...removed.filter((op) => !list.some((o) => o.id === op.id)).map((op) => ({ ...op, updatedAt: now })),
+    ]);
   }
 
   setReference(key: ReferenceKey, ref: Reference | null): void {
     this.references.update((all) => ({ ...all, [key]: ref }));
+    this.referenceTimes.update((times) => ({ ...times, [key]: Date.now() }));
   }
 
   /* ---------- Import d'un fichier CSV ---------- */
 
   /** Efface tout et reprend les données du fichier. */
   replaceAll(data: VolakoData): void {
-    this.operations.set(data.operations);
+    const now = Date.now();
+    const kept = new Set(data.operations.map((op) => op.id));
+    // Ce qui disparaît est supprimé aussi sur les autres appareils
+    this.markDeleted(this.operations().filter((op) => !kept.has(op.id)).map((op) => op.id));
+    this.operations.set(data.operations.map((op) => ({ ...op, updatedAt: now })));
     this.references.set(data.references);
-    this.budgets.set(data.budgets);
+    this.referenceTimes.set({ banque: now, mvola: now });
+    this.budgets.set(Object.fromEntries(Object.entries(data.budgets).map(([m, b]) => [m, { ...b, updatedAt: now }])));
   }
 
   /**
@@ -261,12 +323,14 @@ export class BudgetStore {
     // Les frais suivent leur opération : ajoutés seulement avec elle
     const fees = data.operations.filter((op) => op.parentId !== null && addedIds.has(op.parentId) && !known.has(op.id));
 
-    this.operations.update((list) => [...list, ...added, ...fees]);
-    this.budgets.update((all) => ({ ...data.budgets, ...all }));
-    this.references.update((all) => ({
-      banque: all.banque ?? data.references.banque,
-      mvola: all.mvola ?? data.references.mvola,
-    }));
+    const now = Date.now();
+    this.operations.update((list) => [...list, ...[...added, ...fees].map((op) => ({ ...op, updatedAt: now }))]);
+    const newMonths = Object.entries(data.budgets).filter(([month]) => !this.budgets()[month]);
+    this.budgets.update((all) => ({ ...Object.fromEntries(newMonths.map(([m, b]) => [m, { ...b, updatedAt: now }])), ...all }));
+    for (const key of ['banque', 'mvola'] as const) {
+      const ref = data.references[key];
+      if (!this.references()[key] && ref) this.setReference(key, ref);
+    }
     return added.length;
   }
 }

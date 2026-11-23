@@ -4,6 +4,17 @@ import { BudgetStore } from './budget-store';
 import { Operation } from './models';
 import { pad2 } from './utils';
 
+/** Réponse du script Google */
+export interface ScriptReply {
+  ok: boolean;
+  url?: string;
+  error?: string;
+  version?: number;
+  /** Synchro : contenu du fichier de données, et refus si un autre appareil a enregistré entre-temps */
+  data?: string | null;
+  conflict?: boolean;
+}
+
 /** Adresse du script Google (déployé en application Web) et clé secrète partagée avec lui */
 export interface DriveSettings {
   url: string;
@@ -33,7 +44,7 @@ const TRASH_KEY = 'drivePendingTrash';
 /** Un peu plus que la durée du message « Annuler » (5 s) */
 const UNDO_DELAY = 6000;
 /** Version du script Google attendue (constante VERSION de google-apps-script/Code.gs) */
-const SCRIPT_VERSION = 2;
+const SCRIPT_VERSION = 3;
 
 /** Plus grand côté de la photo après compression, en pixels */
 const MAX_SIDE = 1280;
@@ -273,8 +284,19 @@ export class PhotoService {
     }
   }
 
+  /** Appel au script Google (aussi utilisé par la synchro) */
+  call(body: object): Promise<ScriptReply> {
+    return this.post(this.settings().url, body);
+  }
+
+  /** Change la clé secrète : sur un deuxième appareil, on reprend celle déjà mise dans le script */
+  setSecret(secret: string): void {
+    this.settings.update((s) => ({ ...s, secret: secret.trim() }));
+    saveSettings(this.settings());
+  }
+
   /** Le corps part en texte brut : un envoi JSON déclencherait une vérification que le script Google refuse. */
-  private async post(url: string, body: object): Promise<{ ok: boolean; url?: string; error?: string; version?: number }> {
+  private async post(url: string, body: object): Promise<ScriptReply> {
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },

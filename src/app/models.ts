@@ -31,6 +31,8 @@ export interface Operation {
   parentId: number | null;
   /** Lien vers la photo dans Google Drive (absent tant qu'elle n'est pas envoyée) */
   photo?: string;
+  /** Dernière modification (ms) : à la synchro, la version la plus récente l'emporte */
+  updatedAt?: number;
 }
 
 /** Solde connu d'un compte à une date donnée. */
@@ -44,7 +46,15 @@ export interface Reference {
 export interface MonthBudget {
   amounts: Record<string, number>;
   edits: number;
+  /** Dernière modification (ms), pour la synchro */
+  updatedAt?: number;
 }
+
+/** Instant (ms) de la dernière modification de chaque solde de référence, pour la synchro */
+export type ReferenceTimes = Record<ReferenceKey, number>;
+
+/** Opérations supprimées : identifiant → instant (ms) de la suppression, pour la synchro */
+export type Deletions = Record<string, number>;
 
 /** Nombre de modifications permises après la validation d'un budget. */
 export const MAX_BUDGET_EDITS = 3;
