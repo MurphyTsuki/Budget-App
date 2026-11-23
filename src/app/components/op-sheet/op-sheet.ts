@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, model, signal, untracked } from '@
 import { FormsModule } from '@angular/forms';
 
 import { BudgetStore, NewOperation } from '../../budget-store';
-import { CATEGORIES, TRANSFER_CATEGORY } from '../../models';
+import { TRANSFER_CATEGORY } from '../../models';
 import { PhotoService } from '../../photos';
 import { UiService } from '../../ui.service';
 import { DATE_ERROR, formatMoney, parseAmount, parseFrDate, parseNumber, todayISO } from '../../utils';
@@ -129,7 +129,7 @@ export class OpSheetComponent {
   private readonly store = inject(BudgetStore);
   private readonly ui = inject(UiService);
 
-  protected readonly categories = CATEGORIES;
+  protected readonly categories = this.store.categories;
   protected readonly config = computed(() => {
     const kind = this.kind();
     return kind ? SHEETS[kind] : null;

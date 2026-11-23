@@ -68,3 +68,6 @@
     }
   </div>
 }
+
+<button type="button" class="link-btn add-category" (click)="creating.set(true)">+ Ajouter une catégorie</button>
+<app-category-sheet [(open)]="creating" />

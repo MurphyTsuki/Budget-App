@@ -4,7 +4,6 @@ import { Router, RouterLink } from '@angular/router';
 import { BudgetStore } from '../../budget-store';
 import { AmountFieldComponent } from '../../components/amount-field/amount-field';
 import { IconComponent } from '../../components/icon/icon';
-import { CATEGORIES } from '../../models';
 import { MoneyPipe } from '../../pipes';
 import { UiService } from '../../ui.service';
 import { amountToInput, monthLabel, parseNumber, round2 } from '../../utils';
@@ -27,7 +26,7 @@ export class BudgetFormComponent {
   private readonly ui = inject(UiService);
   private readonly router = inject(Router);
 
-  protected readonly categories = CATEGORIES;
+  protected readonly categories = this.store.categories;
   protected readonly current = computed(() => routeMonth(this.month()));
   protected readonly title = computed(() => monthLabel(this.current()));
   protected readonly view = computed(() => this.store.budgetView(this.current()));
@@ -48,7 +47,7 @@ export class BudgetFormComponent {
       const budget = this.store.budgets()[this.current()];
       untracked(() => {
         const values: Record<string, string> = {};
-        for (const c of CATEGORIES) {
+        for (const c of this.store.categories()) {
           const amount = budget?.amounts[c.name];
           values[c.name] = amount ? amountToInput(amount) : '';
         }
@@ -66,7 +65,7 @@ export class BudgetFormComponent {
 
   protected submit(): void {
     const amounts: Record<string, number> = {};
-    for (const c of CATEGORIES) {
+    for (const c of this.store.categories()) {
       const text = this.values()[c.name]?.trim() ?? '';
       const amount = text === '' ? 0 : parseNumber(text);
       if (amount === null) return this.error.set(`Montant invalide pour ${c.name}`);

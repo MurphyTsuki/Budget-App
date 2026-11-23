@@ -10,7 +10,10 @@ import {
   Reference,
   ReferenceKey,
   ReferenceTimes,
-  isCategory,
+  CATEGORY_COLORS,
+  CATEGORY_ICONS,
+  Category,
+  isCategoryName,
 } from './models';
 import { isISODate } from './utils';
 
@@ -20,6 +23,7 @@ const KEYS = {
   budgets: 'budgets',
   deleted: 'deletedOps',
   referenceTimes: 'referencesUpdatedAt',
+  categories: 'customCategories',
 } as const;
 
 /** Clés de l'ancienne version (dépenses à catégories libres), effacées au premier lancement. */
@@ -79,7 +83,7 @@ function normalizeOperation(raw: unknown): Operation | null {
   if (typeof id !== 'number' || !Number.isFinite(amount) || amount <= 0) return null;
   if (!isISODate(date) || !isOneOf(KINDS, kind) || !isOneOf(ACCOUNT_KEYS, account)) return null;
 
-  const category = kind === 'depense' && isCategory(raw['category']) ? raw['category'] : null;
+  const category = kind === 'depense' && isCategoryName(raw['category']) ? raw['category'] : null;
   if (kind === 'depense' && category === null) return null;
 
   const photo = raw['photo'];
@@ -147,7 +151,7 @@ export function normalizeBudgets(data: unknown): Record<string, MonthBudget> {
     const amounts: Record<string, number> = {};
     for (const [category, value] of Object.entries(raw['amounts'])) {
       const amount = Number(value);
-      if (isCategory(category) && Number.isFinite(amount) && amount >= 0) amounts[category] = amount;
+      if (isCategoryName(category) && Number.isFinite(amount) && amount >= 0) amounts[category] = amount;
     }
     const edits = Number(raw['edits']);
     const updatedAt = raw['updatedAt'];
@@ -197,4 +201,29 @@ export function loadReferenceTimes(): ReferenceTimes {
 
 export function saveReferenceTimes(times: ReferenceTimes): void {
   save(KEYS.referenceTimes, times);
+}
+
+/** Catégories créées par l'utilisateur */
+export function normalizeCategories(data: unknown): Category[] {
+  if (!Array.isArray(data)) return [];
+  const list: Category[] = [];
+  for (const raw of data) {
+    if (!isRecord(raw) || !isCategoryName(raw['name'])) continue;
+    const name = raw['name'].trim();
+    if (list.some((c) => c.name.toLowerCase() === name.toLowerCase())) continue;
+    list.push({
+      name,
+      icon: isOneOf(CATEGORY_ICONS, raw['icon']) ? raw['icon'] : 'tag',
+      color: isOneOf(CATEGORY_COLORS, raw['color']) ? raw['color'] : CATEGORY_COLORS[list.length % CATEGORY_COLORS.length],
+    });
+  }
+  return list;
+}
+
+export function loadCategories(): Category[] {
+  return normalizeCategories(readJson(KEYS.categories));
+}
+
+export function saveCategories(list: readonly Category[]): void {
+  save(KEYS.categories, list);
 }

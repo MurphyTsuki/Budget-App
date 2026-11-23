@@ -33,7 +33,7 @@
           <div class="field">
             <span class="label" id="sheet-category">Catégorie</span>
             <div class="chips" role="radiogroup" aria-labelledby="sheet-category">
-              @for (cat of categories; track cat.name) {
+              @for (cat of categories(); track cat.name) {
                 <button
                   type="button"
                   class="chip"

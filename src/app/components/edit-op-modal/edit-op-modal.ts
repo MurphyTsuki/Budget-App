@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, signal, untracked } from '@angular
 import { FormsModule } from '@angular/forms';
 
 import { BudgetStore } from '../../budget-store';
-import { CATEGORIES, Operation } from '../../models';
+import { Operation } from '../../models';
 import { PhotoService } from '../../photos';
 import { UiService } from '../../ui.service';
 import { DATE_ERROR, amountToInput, isoToFr, parseAmount, parseFrDate, parseNumber } from '../../utils';
@@ -32,7 +32,7 @@ export class EditOpModalComponent {
   private readonly store = inject(BudgetStore);
   protected readonly photos = inject(PhotoService);
 
-  protected readonly categories = CATEGORIES;
+  protected readonly categories = this.store.categories;
 
   protected readonly op = computed(() => {
     const id = this.ui.editingId();

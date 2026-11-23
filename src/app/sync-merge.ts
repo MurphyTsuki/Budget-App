@@ -42,7 +42,13 @@ export function mergeStates(local: SyncState, remote: SyncState): SyncState {
     }
   }
 
-  return { operations, deleted, budgets, references, referenceTimes };
+  // Catégories créées : réunies par nom (elles ne se suppriment pas)
+  const categories = [...remote.categories];
+  for (const c of local.categories) {
+    if (!categories.some((r) => r.name.toLowerCase() === c.name.toLowerCase())) categories.push(c);
+  }
+
+  return { operations, deleted, budgets, references, referenceTimes, categories };
 }
 
 /** Texte stable d'un état (mêmes données → même texte), pour savoir s'il a changé */
@@ -60,5 +66,6 @@ export function serializeState(state: SyncState): string {
     ),
     references: state.references,
     referenceTimes: state.referenceTimes,
+    categories: state.categories,
   });
 }

@@ -3,6 +3,7 @@ import { Injectable, computed, effect, signal } from '@angular/core';
 import {
   AccountKey,
   CATEGORIES,
+  CATEGORY_COLORS,
   Category,
   Deletions,
   FEES_CATEGORY,
@@ -13,16 +14,19 @@ import {
   Reference,
   ReferenceKey,
   ReferenceTimes,
+  setCustomCategories,
 } from './models';
 import type { VolakoData } from './csv';
 import {
   clearOldData,
   loadBudgets,
+  loadCategories,
   loadDeletions,
   loadOperations,
   loadReferenceTimes,
   loadReferences,
   saveBudgets,
+  saveCategories,
   saveDeletions,
   saveOperations,
   saveReferenceTimes,
@@ -58,6 +62,16 @@ export interface SyncState {
   budgets: Record<string, MonthBudget>;
   references: Record<ReferenceKey, Reference | null>;
   referenceTimes: ReferenceTimes;
+  /** Catégories créées par l'utilisateur */
+  categories: Category[];
+}
+
+/** Noms de catégories utilisés dans des données importées */
+function categoriesIn(data: VolakoData): string[] {
+  const names = new Set<string>();
+  for (const op of data.operations) if (op.category) names.add(op.category);
+  for (const budget of Object.values(data.budgets)) for (const name of Object.keys(budget.amounts)) names.add(name);
+  return [...names];
 }
 
 /** Part consommée en %, arrondie (null si 0 prévu et 0 dépensé). */
@@ -78,6 +92,9 @@ export class BudgetStore {
   /** Opérations supprimées et date des soldes de référence : utiles à la synchro entre appareils */
   readonly deleted = signal<Deletions>(loadDeletions());
   readonly referenceTimes = signal<ReferenceTimes>(loadReferenceTimes());
+  /** Catégories créées par l'utilisateur, après les 12 de départ */
+  readonly customCategories = signal<Category[]>(loadCategories());
+  readonly categories = computed(() => [...CATEGORIES, ...this.customCategories()]);
 
   /** État complet à synchroniser */
   readonly syncState = computed<SyncState>(() => ({
@@ -86,6 +103,7 @@ export class BudgetStore {
     budgets: this.budgets(),
     references: this.references(),
     referenceTimes: this.referenceTimes(),
+    categories: this.customCategories(),
   }));
 
   /** Solde de chaque compte */
@@ -106,6 +124,32 @@ export class BudgetStore {
     effect(() => saveBudgets(this.budgets()));
     effect(() => saveDeletions(this.deleted()));
     effect(() => saveReferenceTimes(this.referenceTimes()));
+    effect(() => {
+      const list = this.customCategories();
+      saveCategories(list);
+      setCustomCategories(list);
+    });
+  }
+
+  /** Crée une catégorie de dépense. Renvoie un message d'erreur, ou '' si elle est créée. */
+  addCategory(name: string, icon: string, color: string): string {
+    const clean = name.trim().replace(/\s+/g, ' ');
+    if (!clean) return 'Donne un nom à la catégorie';
+    if (clean.length > 30) return 'Nom trop long (30 caractères au plus)';
+    if (this.categories().some((c) => c.name.toLowerCase() === clean.toLowerCase())) return 'Cette catégorie existe déjà';
+    this.customCategories.update((list) => [...list, { name: clean, icon, color }]);
+    return '';
+  }
+
+  /** Ajoute les catégories inconnues trouvées (fichier CSV importé) */
+  addCategoriesNamed(names: string[]): void {
+    for (const name of names) {
+      if (this.categories().some((c) => c.name === name)) continue;
+      this.customCategories.update((list) => [
+        ...list,
+        { name, icon: 'tag', color: CATEGORY_COLORS[list.length % CATEGORY_COLORS.length] },
+      ]);
+    }
   }
 
   /** Remplace tout par l'état fusionné venu de la synchro (les dates de modification sont gardées telles quelles). */
@@ -115,6 +159,7 @@ export class BudgetStore {
     this.budgets.set(state.budgets);
     this.references.set(state.references);
     this.referenceTimes.set(state.referenceTimes);
+    this.customCategories.set(state.categories);
   }
 
   /** Note la suppression de ces opérations (pour qu'elles ne reviennent pas d'un autre appareil) */
@@ -189,7 +234,7 @@ export class BudgetStore {
       }
     }
 
-    const lines = CATEGORIES.map((category) => {
+    const lines = this.categories().map((category) => {
       const planned = budget?.amounts[category.name] ?? 0;
       const spent = round2(spentBy.get(category.name) ?? 0);
       return { category, budget: planned, spent, percent: percentOf(spent, planned) };
@@ -301,6 +346,7 @@ export class BudgetStore {
 
   /** Efface tout et reprend les données du fichier. */
   replaceAll(data: VolakoData): void {
+    this.addCategoriesNamed(categoriesIn(data));
     const now = Date.now();
     const kept = new Set(data.operations.map((op) => op.id));
     // Ce qui disparaît est supprimé aussi sur les autres appareils
@@ -317,6 +363,7 @@ export class BudgetStore {
    * Renvoie le nombre d'opérations ajoutées.
    */
   addMissing(data: VolakoData): number {
+    this.addCategoriesNamed(categoriesIn(data));
     const known = new Set(this.operations().map((op) => op.id));
     const added = data.operations.filter((op) => op.parentId === null && !known.has(op.id));
     const addedIds = new Set(added.map((op) => op.id));

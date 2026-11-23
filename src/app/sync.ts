@@ -5,6 +5,7 @@ import { exportCsv } from './csv';
 import { PhotoService } from './photos';
 import {
   normalizeBudgets,
+  normalizeCategories,
   normalizeDeletions,
   normalizeOperations,
   normalizeReferenceTimes,
@@ -38,6 +39,7 @@ function readState(raw: unknown): SyncState | null {
     budgets: normalizeBudgets(s['budgets']),
     references: normalizeReferences(s['references']),
     referenceTimes: normalizeReferenceTimes(s['referenceTimes']),
+    categories: normalizeCategories(s['categories']),
   };
 }
 

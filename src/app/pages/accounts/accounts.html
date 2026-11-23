@@ -91,7 +91,7 @@
 </div>
 
 @if (driveOpen()) {
-  <div class="modal" (click)="$event.target === $event.currentTarget && driveOpen.set(false)">
+  <div class="modal" (click)="onDriveBackdrop($event)">
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="drive-title">
       <div class="label">Photos des dépenses</div>
       <h2 id="drive-title" class="sheet-title">Google Drive</h2>

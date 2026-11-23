@@ -63,6 +63,11 @@ export class AccountsComponent {
     this.driveMessage.set({ text: 'Clé enregistrée : touche « Tester et enregistrer »', error: false });
   }
 
+  /** Clic sur le fond de la fenêtre Drive : ferme (sans annuler les clics sur ce qu'elle contient) */
+  protected onDriveBackdrop(event: MouseEvent): void {
+    if (event.target === event.currentTarget) this.driveOpen.set(false);
+  }
+
   protected openDrive(): void {
     this.driveUrl.set(this.photos.settings().url);
     this.secretDraft.set(this.photos.settings().secret);

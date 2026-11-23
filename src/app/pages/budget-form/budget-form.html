@@ -14,14 +14,14 @@
 } @else {
   <form (submit)="$event.preventDefault(); submit()">
     <div class="budget-form">
-      @for (c of categories; track c.name) {
+      @for (c of categories(); track c.name) {
         <label class="bline" [style.--c]="c.color">
           <span class="bubble tinted"><app-icon [name]="c.icon" /></span>
           <span class="bline-name">{{ c.name }}</span>
           <app-amount-field
             [inputId]="'budget-' + $index"
             placeholder="—"
-            [value]="values()[c.name]"
+            [value]="values()[c.name] || ''"
             (valueChange)="setValue(c.name, $event)"
           />
         </label>

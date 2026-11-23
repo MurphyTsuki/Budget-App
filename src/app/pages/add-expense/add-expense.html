@@ -8,7 +8,7 @@
 
   <span class="label" id="add-category">Catégorie</span>
   <div class="cat-grid four" role="radiogroup" aria-labelledby="add-category">
-    @for (c of categories; track c.name) {
+    @for (c of categories(); track c.name) {
       <button
         type="button"
         class="cat-tile"
@@ -22,6 +22,10 @@
         <span>{{ shortName(c.name) }}</span>
       </button>
     }
+    <button type="button" class="cat-tile create" (click)="creating.set(true)">
+      <app-icon name="plus" />
+      <span>Créer</span>
+    </button>
   </div>
 
   <div class="field">
@@ -55,3 +59,6 @@
 
   <button type="submit" class="btn primary big">{{ submitLabel() }}</button>
 </form>
+
+<!-- Hors du formulaire : la fenêtre a son propre formulaire -->
+<app-category-sheet [(open)]="creating" />

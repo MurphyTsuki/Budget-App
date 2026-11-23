@@ -1530,6 +1530,41 @@ h3 {
   vertical-align: -2px;
 }
 
+/* Nouvelle catégorie : choix de l'icône et de la couleur */
+.pick-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+  gap: 8px;
+}
+
+.pick {
+  height: 44px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  color: var(--c);
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+
+.pick[aria-checked='true'] {
+  border-color: var(--c);
+  background: color-mix(in srgb, var(--c) 14%, var(--panel));
+}
+
+.pick.swatch {
+  background: var(--c);
+  border: 2px solid transparent;
+}
+
+.pick.swatch[aria-checked='true'] {
+  border-color: var(--text);
+}
+
+.link-btn.add-category {
+  margin-top: 20px;
+}
+
 /* Importer : le champ fichier couvre toute la ligne, invisible */
 .file-choice {
   position: relative;

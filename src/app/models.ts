@@ -100,10 +100,35 @@ export const FEES_CATEGORY = 'Crédit Telma';
 /** Les virements bancaires vont automatiquement dans cette catégorie. */
 export const TRANSFER_CATEGORY = 'Imprévu';
 
-export function findCategory(name: string | null): Category {
-  return CATEGORIES.find((c) => c.name === name) ?? { name: name ?? '', icon: 'tag', color: '#a3978a' };
+/** Icônes et couleurs proposées pour une catégorie créée */
+export const CATEGORY_ICONS: readonly string[] = [
+  'tag', 'star', 'bolt', 'gem', 'coin', 'cart', 'bus', 'heart', 'leaf', 'house', 'basket', 'phone', 'wrench', 'pin', 'camera', 'target',
+];
+export const CATEGORY_COLORS: readonly string[] = [
+  // Nouvelles teintes d'abord : les 12 suivantes sont déjà prises par les catégories de départ
+  '#b5e3a1', '#9fb7ff', '#ffd39a', '#a0e7e5', '#d7b5ff', '#f7a8c9',
+  '#f08fa8', '#9fd9c0', '#7fb8f0', '#f5cf62', '#f2b880', '#c9a8f5', '#c8e07a', '#e9a7ef', '#8fd0e8', '#d9b98c', '#a8b4c4', '#ef7466',
+];
+
+/** Longueur maximale d'un nom de catégorie */
+export const CATEGORY_NAME_MAX = 30;
+
+/** Catégories créées par l'utilisateur (tenues à jour par BudgetStore), après les 12 de départ */
+let customCategories: readonly Category[] = [];
+
+export function setCustomCategories(list: readonly Category[]): void {
+  customCategories = list;
 }
 
-export function isCategory(name: unknown): name is string {
-  return CATEGORIES.some((c) => c.name === name);
+export function allCategories(): Category[] {
+  return [...CATEGORIES, ...customCategories];
+}
+
+export function findCategory(name: string | null): Category {
+  return allCategories().find((c) => c.name === name) ?? { name: name ?? '', icon: 'tag', color: '#a3978a' };
+}
+
+/** Nom de catégorie acceptable (une des 12 de départ ou une catégorie créée) */
+export function isCategoryName(name: unknown): name is string {
+  return typeof name === 'string' && name.trim() !== '' && name.length <= CATEGORY_NAME_MAX;
 }

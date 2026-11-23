@@ -4,9 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { BudgetStore } from '../../budget-store';
 import { AmountFieldComponent } from '../../components/amount-field/amount-field';
 import { DateFieldComponent } from '../../components/date-field/date-field';
+import { CategorySheetComponent } from '../../components/category-sheet/category-sheet';
 import { IconComponent } from '../../components/icon/icon';
 import { PhotoFieldComponent } from '../../components/photo-field/photo-field';
-import { CATEGORIES } from '../../models';
 import { PhotoService } from '../../photos';
 import { MoneyPipe } from '../../pipes';
 import { UiService } from '../../ui.service';
@@ -14,18 +14,26 @@ import { DATE_ERROR, addDaysISO, formatMoney, parseAmount, parseFrDate, todayISO
 
 type DateChoice = 'today' | 'yesterday' | 'other';
 
-/** Bouton « + » : dépense en espèces, montant en grand, une des 12 catégories, date en raccourcis. */
+/** Bouton « + » : dépense en espèces, montant en grand, une catégorie en tuile, date en raccourcis. */
 @Component({
   selector: 'app-add-expense',
   templateUrl: './add-expense.html',
-  imports: [FormsModule, AmountFieldComponent, DateFieldComponent, IconComponent, PhotoFieldComponent, MoneyPipe],
+  imports: [
+    FormsModule,
+    AmountFieldComponent,
+    CategorySheetComponent,
+    DateFieldComponent,
+    IconComponent,
+    PhotoFieldComponent,
+    MoneyPipe,
+  ],
 })
 export class AddExpenseComponent {
   protected readonly store = inject(BudgetStore);
   private readonly ui = inject(UiService);
   private readonly photos = inject(PhotoService);
 
-  protected readonly categories = CATEGORIES;
+  protected readonly categories = this.store.categories;
 
   protected readonly description = signal('');
   protected readonly amount = signal('');
@@ -34,6 +42,8 @@ export class AddExpenseComponent {
   protected readonly otherDate = signal('');
   protected readonly photo = signal<Blob | null>(null);
   protected readonly photoName = signal('');
+  /** Fenêtre « Nouvelle catégorie » */
+  protected readonly creating = signal(false);
 
   protected readonly submitLabel = computed(() => {
     const amount = parseAmount(this.amount());

@@ -21,6 +21,7 @@ const state = (partial: Partial<SyncState>): SyncState => ({
   budgets: {},
   references: { banque: null, mvola: null },
   referenceTimes: { banque: 0, mvola: 0 },
+  categories: [],
   ...partial,
 });
 
@@ -65,5 +66,13 @@ describe('mergeStates', () => {
       state({ references: { banque: { date: '2026-11-01', amount: 1 }, mvola: null }, referenceTimes: { banque: 20, mvola: 0 } }),
     );
     expect(merged.references.banque).toBeNull();
+  });
+
+  it('réunit les catégories créées sur chaque appareil', () => {
+    const merged = mergeStates(
+      state({ categories: [{ name: 'Cadeaux', icon: 'gem', color: '#f08fa8' }] }),
+      state({ categories: [{ name: 'Santé', icon: 'heart', color: '#9fd9c0' }, { name: 'cadeaux', icon: 'tag', color: '#7fb8f0' }] }),
+    );
+    expect(merged.categories.map((c) => c.name)).toEqual(['Santé', 'cadeaux']);
   });
 });

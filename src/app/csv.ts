@@ -14,7 +14,7 @@ import {
   OperationKind,
   Reference,
   ReferenceKey,
-  isCategory,
+  isCategoryName,
 } from './models';
 import { pad2 } from './utils';
 
@@ -269,7 +269,7 @@ export function parseCsv(text: string): ParsedCsv {
     if (type === BUDGET_TYPE) {
       const month = parseMonthCell(get('Date'));
       const category = get('Catégorie');
-      if (!month || !isCategory(category) || amount === null || amount < 0) {
+      if (!month || !isCategoryName(category) || amount === null || amount < 0) {
         result.errors.push(`Ligne ${line} : budget incomplet`);
         return;
       }
@@ -293,7 +293,7 @@ export function parseCsv(text: string): ParsedCsv {
       return;
     }
     const category = opType.kind === 'depense' ? get('Catégorie') : '';
-    if (opType.kind === 'depense' && !isCategory(category)) {
+    if (opType.kind === 'depense' && !isCategoryName(category)) {
       result.errors.push(`Ligne ${line} : catégorie « ${category} » inconnue`);
       return;
     }

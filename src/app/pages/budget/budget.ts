@@ -1,7 +1,8 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { BudgetStore } from '../../budget-store';
+import { CategorySheetComponent } from '../../components/category-sheet/category-sheet';
 import { IconComponent } from '../../components/icon/icon';
 import { MAX_BUDGET_EDITS } from '../../models';
 import { MoneyPipe } from '../../pipes';
@@ -27,7 +28,7 @@ export function percentClass(percent: number | null): string {
 @Component({
   selector: 'app-budget',
   templateUrl: './budget.html',
-  imports: [RouterLink, IconComponent, MoneyPipe],
+  imports: [RouterLink, CategorySheetComponent, IconComponent, MoneyPipe],
 })
 export class BudgetComponent {
   readonly month = input<string>();
@@ -47,4 +48,6 @@ export class BudgetComponent {
   );
 
   protected readonly percentClass = percentClass;
+  /** Fenêtre « Nouvelle catégorie » */
+  protected readonly creating = signal(false);
 }
