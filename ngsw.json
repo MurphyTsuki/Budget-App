@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1795461611102,
+  "timestamp": 1795540007505,
   "index": "/Budget-App/index.html",
   "assetGroups": [
     {
@@ -13,9 +13,9 @@
       "urls": [
         "/Budget-App/favicon.ico",
         "/Budget-App/index.html",
-        "/Budget-App/main-HPUA5ZDN.js",
+        "/Budget-App/main-MKHSZ55D.js",
         "/Budget-App/manifest.webmanifest",
-        "/Budget-App/styles-S2IPLUOC.css"
+        "/Budget-App/styles-M4DFEULS.css"
       ],
       "patterns": []
     },
@@ -84,8 +84,8 @@
     "/Budget-App/icons/volako-512.png": "ab16a329766478c5f4c3692eaca28b660bd99765",
     "/Budget-App/icons/volako-maskable-192.png": "0d28d97c6372b27cdd15ccdf23be5996e6a76e26",
     "/Budget-App/icons/volako-maskable-512.png": "83ab95982d333c7e3cb4d87f5796f7a68c47abe7",
-    "/Budget-App/index.html": "7c546b3a8ef539f4dc709ee8452f633f63a4f982",
-    "/Budget-App/main-HPUA5ZDN.js": "da4aca975bf00430b529b7f291b9583080015167",
+    "/Budget-App/index.html": "373391d200e9466c0fd570a387a319e3429c872f",
+    "/Budget-App/main-MKHSZ55D.js": "e71ae0cf3601de100a65d79565111fee0ab0f80f",
     "/Budget-App/manifest.webmanifest": "fb1a1f3db80ce581a25f853b96301b4a40186d92",
     "/Budget-App/media/jetbrains-mono-cyrillic-400-normal-C5JECUCT.woff2": "c0febe33e1c676bf7f92c1554af4def88d18d2b2",
     "/Budget-App/media/jetbrains-mono-cyrillic-400-normal-FGCZYWMY.woff": "a068788da3ded3aa899d766a9a77c67c940fe008",
@@ -127,7 +127,7 @@
     "/Budget-App/media/outfit-latin-ext-400-normal-ZJBXP5IH.woff2": "0458c8bbf863602f879f5f011b50f44e6d25e71c",
     "/Budget-App/media/outfit-latin-ext-500-normal-6CLYNG6P.woff": "0b2a39704aec442339498e1e01f17d29d9f5ec4f",
     "/Budget-App/media/outfit-latin-ext-500-normal-LUXIOPCH.woff2": "ffe08eb668eb47e9849b25bf93d0bd553fdacca0",
-    "/Budget-App/styles-S2IPLUOC.css": "54d3166a68630597c687491eca19908019dff9b5"
+    "/Budget-App/styles-M4DFEULS.css": "ef800488f850c7f6fb0717507ace6c86bd0cbd85"
   },
   "navigationUrls": [
     {
