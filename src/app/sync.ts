@@ -6,6 +6,7 @@ import { PhotoService } from './photos';
 import {
   normalizeBudgets,
   normalizeCategories,
+  normalizeCategoryRemovals,
   normalizeDeletions,
   normalizeFuelPrice,
   normalizeOperations,
@@ -42,6 +43,7 @@ function readState(raw: unknown): SyncState | null {
     references: normalizeReferences(s['references']),
     referenceTimes: normalizeReferenceTimes(s['referenceTimes']),
     categories: normalizeCategories(s['categories']),
+    categoryRemovals: normalizeCategoryRemovals(s['categoryRemovals']),
     moto: normalizeReadings(s['moto']),
     motoDeleted: normalizeDeletions(s['motoDeleted']),
     fuelPrice: normalizeFuelPrice(s['fuelPrice']),

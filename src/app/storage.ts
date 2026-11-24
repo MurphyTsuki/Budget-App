@@ -16,6 +16,7 @@ import {
   CATEGORY_COLORS,
   CATEGORY_ICONS,
   Category,
+  CategoryRemovals,
   isCategoryName,
 } from './models';
 import { isISODate } from './utils';
@@ -27,6 +28,7 @@ const KEYS = {
   deleted: 'deletedOps',
   referenceTimes: 'referencesUpdatedAt',
   categories: 'customCategories',
+  categoryRemovals: 'categoryRemovals',
   moto: 'motoReadings',
   motoDeleted: 'motoDeleted',
   fuelPrice: 'fuelPrice',
@@ -244,6 +246,24 @@ export function loadCategories(): Category[] {
 
 export function saveCategories(list: readonly Category[]): void {
   save(KEYS.categories, list);
+}
+
+export function normalizeCategoryRemovals(data: unknown): CategoryRemovals {
+  const out: CategoryRemovals = {};
+  if (!isRecord(data)) return out;
+  for (const [name, raw] of Object.entries(data)) {
+    if (!isRecord(raw) || typeof raw['removed'] !== 'boolean' || typeof raw['at'] !== 'number') continue;
+    out[name.toLowerCase()] = { removed: raw['removed'], at: raw['at'] };
+  }
+  return out;
+}
+
+export function loadCategoryRemovals(): CategoryRemovals {
+  return normalizeCategoryRemovals(readJson(KEYS.categoryRemovals));
+}
+
+export function saveCategoryRemovals(removals: CategoryRemovals): void {
+  save(KEYS.categoryRemovals, removals);
 }
 
 /* ---------- Moto ---------- */

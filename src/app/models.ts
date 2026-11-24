@@ -86,6 +86,12 @@ export interface MonthBudget {
 /** Instant (ms) de la dernière modification de chaque solde de référence, pour la synchro */
 export type ReferenceTimes = Record<ReferenceKey, number>;
 
+/**
+ * Catégories retirées du budget (nom en minuscules → état et instant du dernier changement).
+ * Une catégorie retirée n'est plus proposée, mais les mois passés qui l'utilisent la gardent.
+ */
+export type CategoryRemovals = Record<string, { removed: boolean; at: number }>;
+
 /** Opérations supprimées : identifiant → instant (ms) de la suppression, pour la synchro */
 export type Deletions = Record<string, number>;
 

@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, signal, untracked } from '@angular
 import { FormsModule } from '@angular/forms';
 
 import { BudgetStore } from '../../budget-store';
-import { FUEL_CATEGORY, Operation } from '../../models';
+import { FUEL_CATEGORY, Operation, findCategory } from '../../models';
 import { PhotoService } from '../../photos';
 import { UiService } from '../../ui.service';
 import { DATE_ERROR, amountToInput, isoToFr, parseAmount, parseFrDate, parseNumber } from '../../utils';
@@ -33,11 +33,15 @@ export class EditOpModalComponent {
   private readonly store = inject(BudgetStore);
   protected readonly photos = inject(PhotoService);
 
-  protected readonly categories = this.store.categories;
-
   protected readonly op = computed(() => {
     const id = this.ui.editingId();
     return id === null ? null : (this.store.operations().find((op) => op.id === id) ?? null);
+  });
+  /** Catégories proposées, plus celle de l'opération si elle a été retirée du budget */
+  protected readonly categories = computed(() => {
+    const list = this.store.categories();
+    const current = this.op()?.category;
+    return current && !list.some((c) => c.name === current) ? [...list, findCategory(current)] : list;
   });
   protected readonly title = computed(() => {
     const op = this.op();

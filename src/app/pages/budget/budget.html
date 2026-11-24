@@ -40,7 +40,7 @@
     <p>Tant que le budget n'est pas fait,<br />tes dépenses ne sont suivies nulle part.</p>
     <a class="btn alert-btn" [routerLink]="['/budget', current(), 'definir']">Définir le budget</a>
   </div>
-  <p class="label faint center-note">12 catégories · 3 modifications<br />possibles une fois validé</p>
+  <p class="label faint center-note">{{ categoryCount() }} catégories · 3 modifications<br />possibles une fois validé</p>
 } @else {
   <div class="panel consumed">
     <span class="label">Consommé</span>

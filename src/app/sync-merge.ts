@@ -62,6 +62,12 @@ export function mergeStates(local: SyncState, remote: SyncState): SyncState {
     if (!categories.some((r) => r.name.toLowerCase() === c.name.toLowerCase())) categories.push(c);
   }
 
+  // Catégories retirées ou rétablies : le changement le plus récent l'emporte
+  const categoryRemovals = { ...remote.categoryRemovals };
+  for (const [name, mine] of Object.entries(local.categoryRemovals)) {
+    if (!categoryRemovals[name] || mine.at >= categoryRemovals[name].at) categoryRemovals[name] = mine;
+  }
+
   const moto = mergeById<MotoReading>(local.moto, remote.moto, local.motoDeleted, remote.motoDeleted);
   const fuelPrice = local.fuelPrice.updatedAt >= remote.fuelPrice.updatedAt ? local.fuelPrice : remote.fuelPrice;
 
@@ -72,6 +78,7 @@ export function mergeStates(local: SyncState, remote: SyncState): SyncState {
     references,
     referenceTimes,
     categories,
+    categoryRemovals,
     moto: moto.items.sort((a, b) => a.id - b.id),
     motoDeleted: moto.deleted,
     fuelPrice,
@@ -94,6 +101,7 @@ export function serializeState(state: SyncState): string {
     references: state.references,
     referenceTimes: state.referenceTimes,
     categories: state.categories,
+    categoryRemovals: sortKeys(state.categoryRemovals),
     moto: [...state.moto]
       .sort((a, b) => a.id - b.id)
       .map((r) => sortKeys(r as unknown as Record<string, unknown>)),

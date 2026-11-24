@@ -3,6 +3,7 @@ import { Router, RouterLink } from '@angular/router';
 
 import { BudgetStore } from '../../budget-store';
 import { AmountFieldComponent } from '../../components/amount-field/amount-field';
+import { CategorySheetComponent } from '../../components/category-sheet/category-sheet';
 import { IconComponent } from '../../components/icon/icon';
 import { MoneyPipe } from '../../pipes';
 import { UiService } from '../../ui.service';
@@ -17,7 +18,7 @@ import { routeMonth } from '../budget/budget';
 @Component({
   selector: 'app-budget-form',
   templateUrl: './budget-form.html',
-  imports: [RouterLink, AmountFieldComponent, IconComponent, MoneyPipe],
+  imports: [RouterLink, AmountFieldComponent, CategorySheetComponent, IconComponent, MoneyPipe],
 })
 export class BudgetFormComponent {
   readonly month = input<string>();
@@ -26,7 +27,11 @@ export class BudgetFormComponent {
   private readonly ui = inject(UiService);
   private readonly router = inject(Router);
 
-  protected readonly categories = this.store.categories;
+  /** Lignes retirées dans ce formulaire : elles ne disparaissent qu'à la confirmation */
+  protected readonly removed = signal<readonly string[]>([]);
+  protected readonly categories = computed(() => this.store.categories().filter((c) => !this.removed().includes(c.name)));
+  /** Fenêtre « Nouvelle catégorie » */
+  protected readonly creating = signal(false);
   protected readonly current = computed(() => routeMonth(this.month()));
   protected readonly title = computed(() => monthLabel(this.current()));
 
@@ -45,7 +50,7 @@ export class BudgetFormComponent {
   protected readonly error = signal('');
 
   protected readonly total = computed(() =>
-    round2(Object.values(this.values()).reduce((sum, text) => sum + (parseNumber(text) ?? 0), 0)),
+    round2(this.categories().reduce((sum, c) => sum + (parseNumber(this.values()[c.name] ?? '') ?? 0), 0)),
   );
 
   constructor() {
@@ -59,9 +64,22 @@ export class BudgetFormComponent {
           values[c.name] = amount ? amountToInput(amount) : '';
         }
         this.values.set(values);
+        this.removed.set([]);
         this.confirming.set(false);
       });
     });
+  }
+
+  /** Retire la ligne du budget (annulable jusqu'à la confirmation) */
+  protected removeLine(name: string): void {
+    this.removed.update((list) => [...list, name]);
+    this.confirming.set(false);
+    this.error.set('');
+  }
+
+  protected restoreLine(name: string): void {
+    this.removed.update((list) => list.filter((n) => n !== name));
+    this.confirming.set(false);
   }
 
   /** Remplit les montants avec ceux du mois précédent ; rien n'est enregistré avant la confirmation */
@@ -69,7 +87,7 @@ export class BudgetFormComponent {
     const previous = this.previous();
     if (!previous) return;
     const values: Record<string, string> = {};
-    for (const c of this.store.categories()) {
+    for (const c of this.categories()) {
       const amount = previous.amounts[c.name];
       values[c.name] = amount ? amountToInput(amount) : '';
     }
@@ -87,7 +105,7 @@ export class BudgetFormComponent {
 
   protected submit(): void {
     const amounts: Record<string, number> = {};
-    for (const c of this.store.categories()) {
+    for (const c of this.categories()) {
       const text = this.values()[c.name]?.trim() ?? '';
       const amount = text === '' ? 0 : parseNumber(text);
       if (amount === null) return this.error.set(`Montant invalide pour ${c.name}`);
@@ -104,6 +122,7 @@ export class BudgetFormComponent {
     if (!this.store.saveBudget(this.current(), amounts)) {
       return this.error.set('Plus aucune modification possible pour ce mois');
     }
+    this.store.setRemoved(this.removed(), true);
     this.ui.notify(isEdit ? 'Budget modifié' : 'Budget validé');
     void this.router.navigate(['/budget', this.current()]);
   }

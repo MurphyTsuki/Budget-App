@@ -5,6 +5,7 @@ import {
   CATEGORIES,
   CATEGORY_COLORS,
   Category,
+  CategoryRemovals,
   Deletions,
   FEES_CATEGORY,
   FUEL_CATEGORY,
@@ -25,6 +26,7 @@ import {
   clearOldData,
   loadBudgets,
   loadCategories,
+  loadCategoryRemovals,
   loadDeletions,
   loadFuelPrice,
   loadOperations,
@@ -34,6 +36,7 @@ import {
   loadReferences,
   saveBudgets,
   saveCategories,
+  saveCategoryRemovals,
   saveDeletions,
   saveFuelPrice,
   saveOperations,
@@ -74,6 +77,8 @@ export interface SyncState {
   referenceTimes: ReferenceTimes;
   /** Catégories créées par l'utilisateur */
   categories: Category[];
+  /** Catégories retirées du budget */
+  categoryRemovals: CategoryRemovals;
   /** Relevés de la page Moto, ceux qui ont été supprimés et le prix du litre */
   moto: MotoReading[];
   motoDeleted: Deletions;
@@ -110,7 +115,11 @@ export class BudgetStore {
   readonly referenceTimes = signal<ReferenceTimes>(loadReferenceTimes());
   /** Catégories créées par l'utilisateur, après les 12 de départ */
   readonly customCategories = signal<Category[]>(loadCategories());
-  readonly categories = computed(() => [...CATEGORIES, ...this.customCategories()]);
+  readonly categoryRemovals = signal<CategoryRemovals>(loadCategoryRemovals());
+  /** Toutes les catégories, même retirées (les mois passés peuvent encore les utiliser) */
+  readonly allCategories = computed(() => [...CATEGORIES, ...this.customCategories()]);
+  /** Catégories proposées : sans celles retirées du budget */
+  readonly categories = computed(() => this.allCategories().filter((c) => !this.isRemoved(c.name)));
   /** Suivi de la moto */
   readonly readings = signal<MotoReading[]>(loadReadings());
   readonly readingsDeleted = signal<Deletions>(loadReadingDeletions());
@@ -126,6 +135,7 @@ export class BudgetStore {
     references: this.references(),
     referenceTimes: this.referenceTimes(),
     categories: this.customCategories(),
+    categoryRemovals: this.categoryRemovals(),
     moto: this.readings(),
     motoDeleted: this.readingsDeleted(),
     fuelPrice: this.fuelPrice(),
@@ -149,6 +159,7 @@ export class BudgetStore {
     effect(() => saveBudgets(this.budgets()));
     effect(() => saveDeletions(this.deleted()));
     effect(() => saveReferenceTimes(this.referenceTimes()));
+    effect(() => saveCategoryRemovals(this.categoryRemovals()));
     effect(() => saveReadings(this.readings()));
     effect(() => saveReadingDeletions(this.readingsDeleted()));
     effect(() => saveFuelPrice(this.fuelPrice()));
@@ -164,7 +175,13 @@ export class BudgetStore {
     const clean = name.trim().replace(/\s+/g, ' ');
     if (!clean) return 'Donne un nom à la catégorie';
     if (clean.length > 30) return 'Nom trop long (30 caractères au plus)';
-    if (this.categories().some((c) => c.name.toLowerCase() === clean.toLowerCase())) return 'Cette catégorie existe déjà';
+    const known = this.allCategories().find((c) => c.name.toLowerCase() === clean.toLowerCase());
+    if (known && !this.isRemoved(known.name)) return 'Cette catégorie existe déjà';
+    if (known) {
+      // Catégorie retirée autrefois : elle revient avec son icône et sa couleur
+      this.setRemoved([known.name], false);
+      return '';
+    }
     this.customCategories.update((list) => [...list, { name: clean, icon, color }]);
     return '';
   }
@@ -172,12 +189,26 @@ export class BudgetStore {
   /** Ajoute les catégories inconnues trouvées (fichier CSV importé) */
   addCategoriesNamed(names: string[]): void {
     for (const name of names) {
-      if (this.categories().some((c) => c.name === name)) continue;
+      if (this.allCategories().some((c) => c.name === name)) continue;
       this.customCategories.update((list) => [
         ...list,
         { name, icon: 'tag', color: CATEGORY_COLORS[list.length % CATEGORY_COLORS.length] },
       ]);
     }
+  }
+
+  isRemoved(name: string): boolean {
+    return this.categoryRemovals()[name.toLowerCase()]?.removed ?? false;
+  }
+
+  /** Retire des catégories du budget (ou les rétablit) */
+  setRemoved(names: readonly string[], removed: boolean): void {
+    if (!names.length) return;
+    const at = Date.now();
+    this.categoryRemovals.update((all) => ({
+      ...all,
+      ...Object.fromEntries(names.map((name) => [name.toLowerCase(), { removed, at }])),
+    }));
   }
 
   /** Remplace tout par l'état fusionné venu de la synchro (les dates de modification sont gardées telles quelles). */
@@ -188,6 +219,7 @@ export class BudgetStore {
     this.references.set(state.references);
     this.referenceTimes.set(state.referenceTimes);
     this.customCategories.set(state.categories);
+    this.categoryRemovals.set(state.categoryRemovals);
     this.readings.set(state.moto);
     this.readingsDeleted.set(state.motoDeleted);
     this.fuelPrice.set(state.fuelPrice);
@@ -265,11 +297,14 @@ export class BudgetStore {
       }
     }
 
-    const lines = this.categories().map((category) => {
-      const planned = budget?.amounts[category.name] ?? 0;
-      const spent = round2(spentBy.get(category.name) ?? 0);
-      return { category, budget: planned, spent, percent: percentOf(spent, planned) };
-    });
+    // Une catégorie retirée reste visible dans les mois où elle a servi
+    const lines = this.allCategories()
+      .map((category) => {
+        const planned = budget?.amounts[category.name] ?? 0;
+        const spent = round2(spentBy.get(category.name) ?? 0);
+        return { category, budget: planned, spent, percent: percentOf(spent, planned) };
+      })
+      .filter((line) => !this.isRemoved(line.category.name) || line.budget > 0 || line.spent > 0);
     const total = round2(lines.reduce((sum, line) => sum + line.budget, 0));
     const spent = round2(lines.reduce((sum, line) => sum + line.spent, 0));
 

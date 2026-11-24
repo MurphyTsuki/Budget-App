@@ -22,6 +22,7 @@ const state = (partial: Partial<SyncState>): SyncState => ({
   references: { banque: null, mvola: null },
   referenceTimes: { banque: 0, mvola: 0 },
   categories: [],
+  categoryRemovals: {},
   moto: [],
   motoDeleted: {},
   fuelPrice: { price: 5300, updatedAt: 0 },

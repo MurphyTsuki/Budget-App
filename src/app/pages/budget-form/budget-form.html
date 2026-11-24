@@ -21,7 +21,7 @@
       </span>
     </button>
   }
-  <form (submit)="$event.preventDefault(); submit()">
+  <form class="budget-form-page" (submit)="$event.preventDefault(); submit()">
     <div class="budget-form">
       @for (c of categories(); track c.name) {
         <label class="bline" [style.--c]="c.color">
@@ -33,9 +33,25 @@
             [value]="values()[c.name] || ''"
             (valueChange)="setValue(c.name, $event)"
           />
+          <button type="button" class="bline-remove" [attr.aria-label]="'Retirer ' + c.name" (click)="removeLine(c.name)">
+            <app-icon name="close" />
+          </button>
         </label>
       }
     </div>
+
+    <button type="button" class="link-btn add-category" (click)="creating.set(true)">+ Ajouter une catégorie</button>
+
+    @if (removed().length) {
+      <div class="removed-lines">
+        <span class="label">Lignes retirées · touche pour les remettre</span>
+        <div class="chips">
+          @for (name of removed(); track name) {
+            <button type="button" class="chip" (click)="restoreLine(name)">↺ {{ name }}</button>
+          }
+        </div>
+      </div>
+    }
 
     <div class="footbar">
       <div class="footbar-total">
@@ -46,6 +62,12 @@
         <p class="form-error" role="alert">{{ error() }}</p>
       }
       @if (confirming()) {
+        @if (removed().length) {
+          <p class="hint center">
+            {{ removed().join(', ') }} {{ removed().length > 1 ? 'seront retirées' : 'sera retirée' }} du budget et des
+            formulaires (les mois où elles ont servi les gardent).
+          </p>
+        }
         <p class="hint center">
           @if (v.budget) {
             Il te restera {{ v.editsLeft - 1 }} modification{{ v.editsLeft - 1 > 1 ? 's' : '' }} après celle-ci.
@@ -60,4 +82,7 @@
       </button>
     </div>
   </form>
+
+  <!-- Hors du formulaire : la fenêtre a son propre formulaire -->
+  <app-category-sheet [(open)]="creating" [inBudgetForm]="true" />
 }

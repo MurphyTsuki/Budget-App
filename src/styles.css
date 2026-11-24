@@ -1186,16 +1186,20 @@ h3 {
 .budget-form {
   display: grid;
   gap: 8px;
-  padding-bottom: 130px;
+}
+
+/* Place pour la barre du total, fixée en bas */
+.budget-form-page {
+  padding-bottom: 170px;
 }
 
 .bline {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 12px;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  gap: 8px;
   align-items: center;
   min-height: 48px;
-  padding: 0 16px 0 8px;
+  padding: 0 8px 0 8px;
   border-radius: 15px;
   background: var(--panel);
   border: 1px solid var(--line);
@@ -2039,6 +2043,35 @@ body[data-theme] .toast {
 .fuel-fields {
   display: grid;
   gap: 8px;
+}
+
+/* ---------- Formulaire du budget : retirer une ligne ---------- */
+
+.bline-remove {
+  width: 30px;
+  height: 30px;
+  margin-right: -6px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex: none;
+  color: var(--faint);
+}
+
+.bline-remove:hover,
+.bline-remove:active {
+  color: var(--danger);
+}
+
+.bline-remove .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.removed-lines {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
 }
 
 .moto-form .grid-2,

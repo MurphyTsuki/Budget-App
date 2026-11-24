@@ -1,4 +1,4 @@
-import { Component, effect, inject, model, signal, untracked } from '@angular/core';
+import { Component, effect, inject, input, model, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { BudgetStore } from '../../budget-store';
@@ -75,8 +75,12 @@ import { IconComponent } from '../icon/icon';
             </div>
 
             <p class="hint">
-              Elle démarre à 0 dans le budget du mois. Pour lui donner un montant ce mois-ci, il faudra utiliser une
-              des modifications du budget.
+              @if (inBudgetForm()) {
+                Elle s'ajoute aux lignes du budget : donne-lui un montant, puis valide.
+              } @else {
+                Elle démarre à 0 dans le budget du mois. Pour lui donner un montant ce mois-ci, il faudra utiliser une
+                des modifications du budget.
+              }
             </p>
             @if (error()) {
               <p class="form-error" role="alert">{{ error() }}</p>
@@ -91,6 +95,8 @@ import { IconComponent } from '../icon/icon';
 })
 export class CategorySheetComponent {
   readonly open = model(false);
+  /** Ouverte depuis le formulaire du budget (le texte d'aide change) */
+  readonly inBudgetForm = input(false);
 
   private readonly store = inject(BudgetStore);
   private readonly ui = inject(UiService);
