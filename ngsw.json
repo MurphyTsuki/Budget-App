@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1795540007505,
+  "timestamp": 1795635707289,
   "index": "/Budget-App/index.html",
   "assetGroups": [
     {
@@ -13,7 +13,7 @@
       "urls": [
         "/Budget-App/favicon.ico",
         "/Budget-App/index.html",
-        "/Budget-App/main-MKHSZ55D.js",
+        "/Budget-App/main-763HB4DQ.js",
         "/Budget-App/manifest.webmanifest",
         "/Budget-App/styles-M4DFEULS.css"
       ],
@@ -84,8 +84,8 @@
     "/Budget-App/icons/volako-512.png": "ab16a329766478c5f4c3692eaca28b660bd99765",
     "/Budget-App/icons/volako-maskable-192.png": "0d28d97c6372b27cdd15ccdf23be5996e6a76e26",
     "/Budget-App/icons/volako-maskable-512.png": "83ab95982d333c7e3cb4d87f5796f7a68c47abe7",
-    "/Budget-App/index.html": "373391d200e9466c0fd570a387a319e3429c872f",
-    "/Budget-App/main-MKHSZ55D.js": "e71ae0cf3601de100a65d79565111fee0ab0f80f",
+    "/Budget-App/index.html": "265d145ff3064989cfa7d17b9fb3b5808df5c40c",
+    "/Budget-App/main-763HB4DQ.js": "480a39c45e61632e04e8b895edeee36914f29949",
     "/Budget-App/manifest.webmanifest": "fb1a1f3db80ce581a25f853b96301b4a40186d92",
     "/Budget-App/media/jetbrains-mono-cyrillic-400-normal-C5JECUCT.woff2": "c0febe33e1c676bf7f92c1554af4def88d18d2b2",
     "/Budget-App/media/jetbrains-mono-cyrillic-400-normal-FGCZYWMY.woff": "a068788da3ded3aa899d766a9a77c67c940fe008",
