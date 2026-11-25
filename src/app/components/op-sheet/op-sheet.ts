@@ -29,6 +29,8 @@ interface SheetConfig {
   /** Libellé : obligatoire, facultatif (valeur par défaut) ou absent */
   description: { required: true; placeholder: string } | { required: false; fallback: string } | null;
   category?: boolean;
+  /** Catégorie choisie d'avance (modifiable) */
+  defaultCategory?: string;
   fees?: boolean;
   /** Les dépenses peuvent avoir une photo (envoyée dans Drive) */
   photo?: boolean;
@@ -69,11 +71,12 @@ const SHEETS: Record<SheetKind, SheetConfig> = {
   virement: {
     label: 'Banque · dépense',
     title: 'Virement bancaire',
-    hint: 'Compté automatiquement dans la catégorie Imprévu.',
     description: { required: true, placeholder: 'Ex: Virement à Hery' },
+    category: true,
+    defaultCategory: TRANSFER_CATEGORY,
     photo: true,
-    done: 'Virement enregistré dans Imprévu',
-    build: (amount, description, date) => expense('banque', 'virement')(amount, description, date, TRANSFER_CATEGORY),
+    done: 'Virement enregistré',
+    build: expense('banque', 'virement'),
   },
   especes: {
     label: 'Espèces',
@@ -166,6 +169,9 @@ export class OpSheetComponent {
           field.set('');
         }
         this.photo.set(null);
+        const preset = this.config()?.defaultCategory;
+        // La catégorie choisie d'avance doit encore être proposée (elle a pu être retirée du budget)
+        if (preset && this.categories().some((c) => c.name === preset)) this.category.set(preset);
       });
     });
   }
