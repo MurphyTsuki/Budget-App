@@ -175,9 +175,11 @@ export function normalizeBudgets(data: unknown): Record<string, MonthBudget> {
     }
     const edits = Number(raw['edits']);
     const updatedAt = raw['updatedAt'];
+    const removed = Array.isArray(raw['removed']) ? raw['removed'].filter(isCategoryName) : [];
     budgets[month] = {
       amounts,
       edits: Number.isInteger(edits) && edits > 0 ? edits : 0,
+      ...(removed.length ? { removed } : {}),
       ...(typeof updatedAt === 'number' && updatedAt > 0 ? { updatedAt } : {}),
     };
   }

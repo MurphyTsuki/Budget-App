@@ -8,7 +8,12 @@
 </div>
 
 <div class="hero-number" [class.negative]="store.balances().mvola < 0">{{ store.balances().mvola | money }}</div>
-<div class="label">Frais payés ce mois · <span class="accent">{{ fees() | money }}</span></div>
+<div class="label">
+  Frais payés
+  @for (f of fees(); track f.month) {
+    · {{ f.name }} <span class="accent">{{ f.amount | money }}</span>
+  }
+</div>
 
 <div class="mv-actions">
   <button type="button" class="mv-act dep" (click)="sheet.set('depot-mvola')">

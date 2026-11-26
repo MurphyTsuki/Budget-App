@@ -27,7 +27,7 @@ export class BudgetFormComponent {
   private readonly ui = inject(UiService);
   private readonly router = inject(Router);
 
-  /** Lignes retirées dans ce formulaire : elles ne disparaissent qu'à la confirmation */
+  /** Lignes retirées du budget de ce mois (enregistrées seulement à la confirmation) */
   protected readonly removed = signal<readonly string[]>([]);
   protected readonly categories = computed(() => this.store.categories().filter((c) => !this.removed().includes(c.name)));
   /** Fenêtre « Nouvelle catégorie » */
@@ -39,7 +39,7 @@ export class BudgetFormComponent {
   protected readonly previous = computed(() => {
     const month = shiftMonth(this.current(), -1);
     const budget = this.store.budgets()[month];
-    return budget ? { label: monthLabel(month).toLowerCase(), amounts: budget.amounts } : null;
+    return budget ? { label: monthLabel(month).toLowerCase(), amounts: budget.amounts, removed: budget.removed ?? [] } : null;
   });
   protected readonly view = computed(() => this.store.budgetView(this.current()));
 
@@ -64,7 +64,9 @@ export class BudgetFormComponent {
           values[c.name] = amount ? amountToInput(amount) : '';
         }
         this.values.set(values);
-        this.removed.set([]);
+        // Un nouveau budget reprend les lignes retirées du mois précédent
+        const removed = new Set(this.store.removedIn(this.current()));
+        this.removed.set(this.store.categories().filter((c) => removed.has(c.name)).map((c) => c.name));
         this.confirming.set(false);
       });
     });
@@ -87,11 +89,12 @@ export class BudgetFormComponent {
     const previous = this.previous();
     if (!previous) return;
     const values: Record<string, string> = {};
-    for (const c of this.categories()) {
+    for (const c of this.store.categories()) {
       const amount = previous.amounts[c.name];
       values[c.name] = amount ? amountToInput(amount) : '';
     }
     this.values.set(values);
+    this.removed.set(this.store.categories().filter((c) => previous.removed.includes(c.name)).map((c) => c.name));
     this.confirming.set(false);
     this.error.set('');
     this.ui.notify(`Montants de ${previous.label} copiés : vérifie-les puis valide`);
@@ -119,10 +122,9 @@ export class BudgetFormComponent {
     }
 
     const isEdit = this.view().budget !== null;
-    if (!this.store.saveBudget(this.current(), amounts)) {
+    if (!this.store.saveBudget(this.current(), amounts, this.removed())) {
       return this.error.set('Plus aucune modification possible pour ce mois');
     }
-    this.store.setRemoved(this.removed(), true);
     this.ui.notify(isEdit ? 'Budget modifié' : 'Budget validé');
     void this.router.navigate(['/budget', this.current()]);
   }

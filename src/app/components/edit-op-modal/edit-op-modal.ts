@@ -5,7 +5,7 @@ import { BudgetStore } from '../../budget-store';
 import { FUEL_CATEGORY, Operation, findCategory } from '../../models';
 import { PhotoService } from '../../photos';
 import { UiService } from '../../ui.service';
-import { DATE_ERROR, amountToInput, isoToFr, parseAmount, parseFrDate, parseNumber } from '../../utils';
+import { DATE_ERROR, amountToInput, isoToFr, monthOf, parseAmount, parseFrDate, parseNumber } from '../../utils';
 import { AmountFieldComponent } from '../amount-field/amount-field';
 import { DateFieldComponent } from '../date-field/date-field';
 import { FuelFieldsComponent, readFuelFields } from '../fuel-fields/fuel-fields';
@@ -37,12 +37,6 @@ export class EditOpModalComponent {
     const id = this.ui.editingId();
     return id === null ? null : (this.store.operations().find((op) => op.id === id) ?? null);
   });
-  /** Catégories proposées, plus celle de l'opération si elle a été retirée du budget */
-  protected readonly categories = computed(() => {
-    const list = this.store.categories();
-    const current = this.op()?.category;
-    return current && !list.some((c) => c.name === current) ? [...list, findCategory(current)] : list;
-  });
   protected readonly title = computed(() => {
     const op = this.op();
     if (!op) return '';
@@ -64,6 +58,14 @@ export class EditOpModalComponent {
   protected readonly error = signal('');
   protected readonly photo = signal<Blob | null>(null);
   protected readonly photoName = signal('');
+  /** Catégories du budget du mois de la date, plus celle de l'opération si elle n'y est plus */
+  protected readonly categories = computed(() => {
+    const op = this.op();
+    const date = parseFrDate(this.date()) ?? op?.date;
+    const list = date ? this.store.categoriesOf(monthOf(date)) : this.store.categories();
+    const current = op?.category;
+    return current && !list.some((c) => c.name === current) ? [...list, findCategory(current)] : list;
+  });
   /** Dépense Essence : kilométrage et essence restante pour le suivi moto */
   protected readonly fuelCategory = FUEL_CATEGORY;
   protected readonly km = signal('');

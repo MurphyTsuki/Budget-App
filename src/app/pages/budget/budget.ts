@@ -48,7 +48,7 @@ export class BudgetComponent {
   );
 
   protected readonly percentClass = percentClass;
-  protected readonly categoryCount = computed(() => this.store.categories().length);
+  protected readonly categoryCount = computed(() => this.store.categoriesOf(this.current()).length);
   /** Fenêtre « Nouvelle catégorie » */
   protected readonly creating = signal(false);
 }

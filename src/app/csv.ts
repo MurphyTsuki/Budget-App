@@ -54,6 +54,8 @@ const OPERATION_TYPES: { label: string; kind: OperationKind; channel: Channel | 
   { label: 'Retrait MVola', kind: 'retrait-mvola', channel: null },
 ];
 const BUDGET_TYPE = 'Budget';
+/** Libellé d'une ligne Budget qui retire une catégorie du mois */
+const REMOVED_LABEL = 'Catégorie retirée';
 const REFERENCE_TYPE = 'Solde de référence';
 const FUEL_PRICE_TYPE = 'Prix du litre';
 const READING_TYPE = 'Relevé moto';
@@ -125,6 +127,7 @@ export function exportCsv(data: VolakoData): string {
     for (const [category, amount] of Object.entries(budget.amounts)) {
       push([BUDGET_TYPE, '', month, '', '', category, edits, amountCell(amount)]);
     }
+    for (const category of budget.removed ?? []) push([BUDGET_TYPE, '', month, '', '', category, REMOVED_LABEL, '']);
   }
 
   // Les frais MVola sont écrits sur la ligne de leur opération, pas sur une ligne à part
@@ -344,6 +347,11 @@ export function parseCsv(text: string): ParsedCsv {
     if (type === BUDGET_TYPE) {
       const month = parseMonthCell(get('Date'));
       const category = get('Catégorie');
+      if (get('Libellé') === REMOVED_LABEL && month && isCategoryName(category)) {
+        const budget = (result.budgets[month] ??= { amounts: {}, edits: 0 });
+        budget.removed = [...(budget.removed ?? []), category];
+        return;
+      }
       if (!month || !isCategoryName(category) || amount === null || amount < 0) {
         result.errors.push(`Ligne ${line} : budget incomplet`);
         return;

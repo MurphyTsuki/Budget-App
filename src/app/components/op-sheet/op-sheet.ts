@@ -5,7 +5,7 @@ import { BudgetStore, NewOperation } from '../../budget-store';
 import { FUEL_CATEGORY, TRANSFER_CATEGORY } from '../../models';
 import { PhotoService } from '../../photos';
 import { UiService } from '../../ui.service';
-import { DATE_ERROR, formatMoney, parseAmount, parseFrDate, parseNumber, todayISO } from '../../utils';
+import { DATE_ERROR, formatMoney, monthLabel, monthOf, parseAmount, parseFrDate, parseNumber, todayISO } from '../../utils';
 import { AmountFieldComponent } from '../amount-field/amount-field';
 import { DateFieldComponent } from '../date-field/date-field';
 import { FuelFieldsComponent, readFuelFields } from '../fuel-fields/fuel-fields';
@@ -133,7 +133,6 @@ export class OpSheetComponent {
   private readonly store = inject(BudgetStore);
   private readonly ui = inject(UiService);
 
-  protected readonly categories = this.store.categories;
   protected readonly config = computed(() => {
     const kind = this.kind();
     return kind ? SHEETS[kind] : null;
@@ -147,6 +146,11 @@ export class OpSheetComponent {
   protected readonly error = signal('');
   protected readonly photo = signal<Blob | null>(null);
   protected readonly photoName = signal('');
+  /** Catégories du budget du mois de la date saisie (vide = aujourd'hui) */
+  protected readonly categories = computed(() => {
+    const text = this.date().trim();
+    return this.store.categoriesOf(monthOf((text === '' ? todayISO() : parseFrDate(text)) ?? todayISO()));
+  });
   /** Dépense Essence : kilométrage et essence restante pour le suivi moto */
   protected readonly fuelCategory = FUEL_CATEGORY;
   protected readonly km = signal('');
@@ -202,6 +206,9 @@ export class OpSheetComponent {
     if (config.category && !this.category()) return this.error.set('Choisis une catégorie');
     if (fees === null) return this.error.set('Frais invalides');
     if (!date) return this.error.set(DATE_ERROR);
+    if (config.category && !this.categories().some((c) => c.name === this.category())) {
+      return this.error.set(`${this.category()} n'est pas dans le budget de ${monthLabel(monthOf(date))}`);
+    }
     const moto = config.category && this.category() === FUEL_CATEGORY ? readFuelFields(this.km(), this.left()) : {};
     if (typeof moto === 'string') return this.error.set(moto);
     const kmError = this.store.kmError(date, moto.odometer);

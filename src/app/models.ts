@@ -79,6 +79,8 @@ export interface Reference {
 export interface MonthBudget {
   amounts: Record<string, number>;
   edits: number;
+  /** Catégories retirées du budget de ce mois (elles ne sont plus proposées pour ses dépenses) */
+  removed?: string[];
   /** Dernière modification (ms), pour la synchro */
   updatedAt?: number;
 }
@@ -87,8 +89,8 @@ export interface MonthBudget {
 export type ReferenceTimes = Record<ReferenceKey, number>;
 
 /**
- * Catégories retirées du budget (nom en minuscules → état et instant du dernier changement).
- * Une catégorie retirée n'est plus proposée, mais les mois passés qui l'utilisent la gardent.
+ * Ancien format : catégories retirées de tous les mois à la fois (nom en minuscules → état).
+ * Converti au démarrage en catégories retirées mois par mois (MonthBudget.removed).
  */
 export type CategoryRemovals = Record<string, { removed: boolean; at: number }>;
 

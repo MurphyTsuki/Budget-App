@@ -12,7 +12,7 @@ import { FUEL_CATEGORY } from '../../models';
 import { PhotoService } from '../../photos';
 import { MoneyPipe } from '../../pipes';
 import { UiService } from '../../ui.service';
-import { DATE_ERROR, addDaysISO, formatMoney, parseAmount, parseFrDate, todayISO } from '../../utils';
+import { DATE_ERROR, addDaysISO, formatMoney, monthLabel, monthOf, parseAmount, parseFrDate, todayISO } from '../../utils';
 
 type DateChoice = 'today' | 'yesterday' | 'other';
 
@@ -36,7 +36,6 @@ export class AddExpenseComponent {
   private readonly ui = inject(UiService);
   private readonly photos = inject(PhotoService);
 
-  protected readonly categories = this.store.categories;
 
   protected readonly description = signal('');
   protected readonly amount = signal('');
@@ -45,6 +44,16 @@ export class AddExpenseComponent {
   protected readonly otherDate = signal('');
   protected readonly photo = signal<Blob | null>(null);
   protected readonly photoName = signal('');
+  /** Date choisie (null si « Autre date » est invalide) */
+  private readonly date = computed(() => {
+    const choice = this.dateChoice();
+    if (choice === 'today') return todayISO();
+    if (choice === 'yesterday') return addDaysISO(todayISO(), -1);
+    return parseFrDate(this.otherDate().trim());
+  });
+  /** Catégories du budget du mois de la dépense */
+  protected readonly categories = computed(() => this.store.categoriesOf(monthOf(this.date() ?? todayISO())));
+
   /** Dépense Essence : kilométrage et essence restante pour le suivi moto */
   protected readonly fuelCategory = FUEL_CATEGORY;
   protected readonly km = signal('');
@@ -65,17 +74,14 @@ export class AddExpenseComponent {
   protected submit(): void {
     const amount = parseAmount(this.amount());
     const category = this.category();
-    const choice = this.dateChoice();
-    const date =
-      choice === 'today'
-        ? todayISO()
-        : choice === 'yesterday'
-          ? addDaysISO(todayISO(), -1)
-          : parseFrDate(this.otherDate().trim());
+    const date = this.date();
 
     if (amount === null) return this.ui.notify('Indique un montant', true);
     if (!category) return this.ui.notify('Choisis une catégorie', true);
     if (!date) return this.ui.notify(DATE_ERROR, true);
+    if (!this.categories().some((c) => c.name === category)) {
+      return this.ui.notify(`${category} n'est pas dans le budget de ${monthLabel(monthOf(date))}`, true);
+    }
     const moto = category === FUEL_CATEGORY ? readFuelFields(this.km(), this.left()) : {};
     if (typeof moto === 'string') return this.ui.notify(moto, true);
     const kmError = this.store.kmError(date, moto.odometer);

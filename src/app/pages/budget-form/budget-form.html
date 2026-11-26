@@ -64,8 +64,8 @@
       @if (confirming()) {
         @if (removed().length) {
           <p class="hint center">
-            {{ removed().join(', ') }} {{ removed().length > 1 ? 'seront retirées' : 'sera retirée' }} du budget et des
-            formulaires (les mois où elles ont servi les gardent).
+            {{ removed().join(', ') }} {{ removed().length > 1 ? 'ne seront pas' : 'ne sera pas' }} dans le budget de
+            {{ title() }}, ni {{ removed().length > 1 ? 'proposées' : 'proposée' }} pour ses dépenses.
           </p>
         }
         <p class="hint center">

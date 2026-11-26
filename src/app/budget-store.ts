@@ -118,8 +118,8 @@ export class BudgetStore {
   readonly categoryRemovals = signal<CategoryRemovals>(loadCategoryRemovals());
   /** Toutes les catégories, même retirées (les mois passés peuvent encore les utiliser) */
   readonly allCategories = computed(() => [...CATEGORIES, ...this.customCategories()]);
-  /** Catégories proposées : sans celles retirées du budget */
-  readonly categories = computed(() => this.allCategories().filter((c) => !this.isRemoved(c.name)));
+  /** Toutes les catégories ; celles proposées pour un mois donné : categoriesOf(mois) */
+  readonly categories = this.allCategories;
   /** Suivi de la moto */
   readonly readings = signal<MotoReading[]>(loadReadings());
   readonly readingsDeleted = signal<Deletions>(loadReadingDeletions());
@@ -160,6 +160,7 @@ export class BudgetStore {
     effect(() => saveDeletions(this.deleted()));
     effect(() => saveReferenceTimes(this.referenceTimes()));
     effect(() => saveCategoryRemovals(this.categoryRemovals()));
+    this.migrateRemovals();
     effect(() => saveReadings(this.readings()));
     effect(() => saveReadingDeletions(this.readingsDeleted()));
     effect(() => saveFuelPrice(this.fuelPrice()));
@@ -175,13 +176,7 @@ export class BudgetStore {
     const clean = name.trim().replace(/\s+/g, ' ');
     if (!clean) return 'Donne un nom à la catégorie';
     if (clean.length > 30) return 'Nom trop long (30 caractères au plus)';
-    const known = this.allCategories().find((c) => c.name.toLowerCase() === clean.toLowerCase());
-    if (known && !this.isRemoved(known.name)) return 'Cette catégorie existe déjà';
-    if (known) {
-      // Catégorie retirée autrefois : elle revient avec son icône et sa couleur
-      this.setRemoved([known.name], false);
-      return '';
-    }
+    if (this.allCategories().some((c) => c.name.toLowerCase() === clean.toLowerCase())) return 'Cette catégorie existe déjà';
     this.customCategories.update((list) => [...list, { name: clean, icon, color }]);
     return '';
   }
@@ -197,17 +192,48 @@ export class BudgetStore {
     }
   }
 
-  isRemoved(name: string): boolean {
-    return this.categoryRemovals()[name.toLowerCase()]?.removed ?? false;
+  /** Catégories retirées du budget de ce mois ; un mois sans budget reprend celles du dernier budget avant lui. */
+  removedIn(month: string): string[] {
+    const budgets = this.budgets();
+    if (budgets[month]) return budgets[month].removed ?? [];
+    const before = Object.keys(budgets)
+      .filter((m) => m < month)
+      .sort()
+      .at(-1);
+    return before ? (budgets[before].removed ?? []) : [];
   }
 
-  /** Retire des catégories du budget (ou les rétablit) */
-  setRemoved(names: readonly string[], removed: boolean): void {
+  /** Catégories proposées pour une dépense de ce mois */
+  categoriesOf(month: string): Category[] {
+    const removed = new Set(this.removedIn(month).map((name) => name.toLowerCase()));
+    return this.allCategories().filter((c) => !removed.has(c.name.toLowerCase()));
+  }
+
+  /**
+   * L'ancienne version retirait une catégorie de tous les mois à la fois. Elle reste retirée seulement
+   * des budgets qui ne l'avaient plus (ceux enregistrés après le retrait) et revient dans les autres.
+   */
+  private migrateRemovals(): void {
+    const names = Object.entries(this.categoryRemovals())
+      .filter(([, r]) => r.removed)
+      .map(([name]) => name);
     if (!names.length) return;
-    const at = Date.now();
+    const removed = this.allCategories()
+      .filter((c) => names.includes(c.name.toLowerCase()))
+      .map((c) => c.name);
+    const now = Date.now();
+    this.budgets.update((all) =>
+      Object.fromEntries(
+        Object.entries(all).map(([month, budget]) => {
+          const missing = removed.filter((name) => !(name in budget.amounts) && !budget.removed?.includes(name));
+          if (!missing.length) return [month, budget];
+          return [month, { ...budget, removed: [...(budget.removed ?? []), ...missing], updatedAt: now }];
+        }),
+      ),
+    );
     this.categoryRemovals.update((all) => ({
       ...all,
-      ...Object.fromEntries(names.map((name) => [name.toLowerCase(), { removed, at }])),
+      ...Object.fromEntries(names.map((name) => [name, { removed: false, at: now }])),
     }));
   }
 
@@ -220,6 +246,7 @@ export class BudgetStore {
     this.referenceTimes.set(state.referenceTimes);
     this.customCategories.set(state.categories);
     this.categoryRemovals.set(state.categoryRemovals);
+    this.migrateRemovals();
     this.readings.set(state.moto);
     this.readingsDeleted.set(state.motoDeleted);
     this.fuelPrice.set(state.fuelPrice);
@@ -297,14 +324,15 @@ export class BudgetStore {
       }
     }
 
-    // Une catégorie retirée reste visible dans les mois où elle a servi
+    // Une catégorie retirée de ce mois reste visible si elle y a servi
+    const removed = new Set(this.removedIn(month).map((name) => name.toLowerCase()));
     const lines = this.allCategories()
       .map((category) => {
         const planned = budget?.amounts[category.name] ?? 0;
         const spent = round2(spentBy.get(category.name) ?? 0);
         return { category, budget: planned, spent, percent: percentOf(spent, planned) };
       })
-      .filter((line) => !this.isRemoved(line.category.name) || line.budget > 0 || line.spent > 0);
+      .filter((line) => !removed.has(line.category.name.toLowerCase()) || line.budget > 0 || line.spent > 0);
     const total = round2(lines.reduce((sum, line) => sum + line.budget, 0));
     const spent = round2(lines.reduce((sum, line) => sum + line.spent, 0));
 
@@ -325,11 +353,14 @@ export class BudgetStore {
    * Enregistre le budget du mois. La première validation est gratuite, ensuite chaque modification compte.
    * Renvoie false s'il ne reste plus de modification.
    */
-  saveBudget(month: string, amounts: Record<string, number>): boolean {
+  saveBudget(month: string, amounts: Record<string, number>, removed: readonly string[] = []): boolean {
     const existing = this.budgets()[month];
     if (existing && existing.edits >= MAX_BUDGET_EDITS) return false;
     const edits = existing ? existing.edits + 1 : 0;
-    this.budgets.update((all) => ({ ...all, [month]: { amounts, edits, updatedAt: Date.now() } }));
+    this.budgets.update((all) => ({
+      ...all,
+      [month]: { amounts, edits, ...(removed.length ? { removed: [...removed] } : {}), updatedAt: Date.now() },
+    }));
     return true;
   }
 
